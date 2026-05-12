@@ -162,9 +162,18 @@ fun LoadingScreen(message: String) {
 @Composable
 fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onSend: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+
+    // Auto-scroll para o fim quando o conteúdo da última mensagem muda (streaming)
+    LaunchedEffect(messages.size, if (messages.isNotEmpty()) messages.last().first.length else 0) {
+        if (messages.isNotEmpty()) {
+            listState.scrollToItem(messages.size - 1)
+        }
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 16.dp),

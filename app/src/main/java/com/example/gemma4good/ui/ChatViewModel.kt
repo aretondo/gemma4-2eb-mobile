@@ -111,12 +111,19 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                inferenceManager.generateResponse(text).collect { response ->
+                var firstToken = true
+                inferenceManager.generateResponse(text).collect { token ->
                     val updatedMessages = _messages.value.toMutableList()
-                    updatedMessages.add(Pair(response, false)) // AI response
+                    if (firstToken) {
+                        updatedMessages.add(Pair(token, false))
+                        firstToken = false
+                    } else {
+                        val lastMsg = updatedMessages.last()
+                        updatedMessages[updatedMessages.size - 1] = Pair(lastMsg.first + token, false)
+                    }
                     _messages.value = updatedMessages
-                    _state.value = ChatState.Idle
                 }
+                _state.value = ChatState.Idle
             } catch (e: Exception) {
                 _state.value = ChatState.Error(e.localizedMessage ?: "Erro desconhecido")
             }
