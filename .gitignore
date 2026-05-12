@@ -1,0 +1,15 @@
+/.gradle/
+/build/
+/app/build/
+/model_output/
+/.idea/
+/local.properties
+/gemma.bin
+*.iml
+.gradle/**
+**/build/
+*.log
+*.tmp
+*.user
+*.swp
+.DS_Store
