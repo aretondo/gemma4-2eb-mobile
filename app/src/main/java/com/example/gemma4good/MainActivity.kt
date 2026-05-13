@@ -24,6 +24,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.gemma4good.ui.ChatState
 import com.example.gemma4good.ui.ChatViewModel
 import com.example.gemma4good.ui.theme.Gemma4GoodTheme
+import android.Manifest
+import android.content.Intent
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -163,6 +174,24 @@ fun LoadingScreen(message: String) {
 fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onSend: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val context = LocalContext.current
+    var isListening by remember { mutableStateOf(false) }
+
+    val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
+    
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            startListening(speechRecognizer, { isListening = it }, { text = it })
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            speechRecognizer.destroy()
+        }
+    }
 
     // Auto-scroll para o fim quando o conteúdo da última mensagem muda (streaming)
     LaunchedEffect(messages.size, if (messages.isNotEmpty()) messages.last().first.length else 0) {
@@ -206,17 +235,73 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
                     unfocusedIndicatorColor = Color.Transparent
                 )
             )
-            IconButton(
-                onClick = {
-                    onSend(text)
-                    text = ""
-                },
-                enabled = !isGenerating && text.isNotBlank()
-            ) {
-                Icon(Icons.Default.Send, contentDescription = null, tint = Color(0xFF2979FF))
+            if (text.isBlank()) {
+                IconButton(
+                    onClick = {
+                        val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+                            if (isListening) {
+                                speechRecognizer.stopListening()
+                                isListening = false
+                            } else {
+                                startListening(speechRecognizer, { isListening = it }, { text = it })
+                            }
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
+                    enabled = !isGenerating
+                ) {
+                    Icon(
+                        Icons.Default.Mic, 
+                        contentDescription = "Falar", 
+                        tint = if (isListening) Color.Red else Color(0xFF2979FF)
+                    )
+                }
+            } else {
+                IconButton(
+                    onClick = {
+                        onSend(text)
+                        text = ""
+                    },
+                    enabled = !isGenerating && text.isNotBlank()
+                ) {
+                    Icon(Icons.Default.Send, contentDescription = "Enviar", tint = Color(0xFF2979FF))
+                }
             }
         }
     }
+}
+
+private fun startListening(
+    speechRecognizer: SpeechRecognizer,
+    onStateChanged: (Boolean) -> Unit,
+    onResult: (String) -> Unit
+) {
+    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "pt-BR")
+    }
+
+    speechRecognizer.setRecognitionListener(object : RecognitionListener {
+        override fun onReadyForSpeech(params: Bundle?) { onStateChanged(true) }
+        override fun onBeginningOfSpeech() {}
+        override fun onRmsChanged(rmsdB: Float) {}
+        override fun onBufferReceived(buffer: ByteArray?) {}
+        override fun onEndOfSpeech() { onStateChanged(false) }
+        override fun onError(error: Int) { onStateChanged(false) }
+        override fun onResults(results: Bundle?) {
+            onStateChanged(false)
+            val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+            if (!matches.isNullOrEmpty()) {
+                onResult(matches[0])
+            }
+        }
+        override fun onPartialResults(partialResults: Bundle?) {}
+        override fun onEvent(eventType: Int, params: Bundle?) {}
+    })
+
+    speechRecognizer.startListening(intent)
 }
 
 @Composable

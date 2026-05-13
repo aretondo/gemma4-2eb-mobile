@@ -30,10 +30,10 @@ Abaixo está o plano dividido em _chunks_ pequenos. Ao pedir para o Flash execut
 *   [ ] Criar um esqueleto básico de navegação: Tela Principal (Home) e Tela de Interação (Chat/Tutor).
 
 ### Fase 2: Motor de Inferência (Gemma 4)
-*   [x] Configurar as dependências do `mediapipe-tasks-genai` no Gradle.
-*   [ ] **Conversão do Modelo:** Criar script Python e converter o modelo original (Safetensors) para o formato `.bin` compatível com MediaPipe Mobile.
+*   [x] Configurar as dependências do `mediapipe-tasks-genai` no Gradle. (Substituído por LiteRT-LM).
+*   [x] **Conversão do Modelo:** Integrado via LiteRT com formato `.litertlm` direto do HuggingFace (sem necessidade de script Python).
 *   [x] Criar um repositório isolado `GemmaInferenceManager` focado exclusivamente em gerenciar o ciclo de vida do modelo.
-*   [ ] Integrar o `GemmaInferenceManager` no ViewModel da tela de Chat, gerenciando os estados da UI (Loading, Generating, Idle, Error).
+*   [x] Integrar o `GemmaInferenceManager` no ViewModel da tela de Chat, gerenciando os estados da UI (Loading, Generating, Idle, Error).
 
 ### Fase 3: Features de Impacto (Diferenciais)
 *   [ ] **Acessibilidade:** Integrar o Speech-to-Text (STT) nativo do Android para permitir que usuários façam perguntas por voz.

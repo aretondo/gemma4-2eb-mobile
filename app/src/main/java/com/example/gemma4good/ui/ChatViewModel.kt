@@ -25,6 +25,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private val inferenceManager = GemmaInferenceManager(application)
     private val modelDownloader = ModelDownloader(application)
+    private val localKnowledgeManager = com.example.gemma4good.data.LocalKnowledgeManager(application)
 
     private val _state = MutableStateFlow<ChatState>(ChatState.LoadingModel)
     val state: StateFlow<ChatState> = _state
@@ -109,10 +110,19 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         _state.value = ChatState.Generating
 
+        val ragContext = localKnowledgeManager.searchContext(text)
+        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é o Gemma Responder, um assistente de emergências e sobrevivência offline. Seja extremamente direto, curto e focado em salvar vidas. Nunca invente procedimentos médicos perigosos. Responda apenas sobre a dúvida a seguir."
+        
+        val finalPrompt = if (ragContext.isNotEmpty()) {
+            "$systemPrompt\n\n$ragContext\n\nPERGUNTA DO USUÁRIO: $text"
+        } else {
+            "$systemPrompt\n\nPERGUNTA DO USUÁRIO: $text"
+        }
+
         viewModelScope.launch {
             try {
                 var firstToken = true
-                inferenceManager.generateResponse(text).collect { token ->
+                inferenceManager.generateResponse(finalPrompt).collect { token ->
                     val updatedMessages = _messages.value.toMutableList()
                     if (firstToken) {
                         updatedMessages.add(Pair(token, false))

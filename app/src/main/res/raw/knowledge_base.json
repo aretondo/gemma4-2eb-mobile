@@ -1,0 +1,26 @@
+[
+  {
+    "keywords": ["queimadura", "queimou", "fogo", "escaldo"],
+    "content": "Para queimaduras de 1º e 2º grau: Resfrie a área com água corrente fria (não gelada) por pelo menos 10 a 20 minutos. NÃO estoure bolhas. NÃO aplique gelo, manteiga, pasta de dente ou pomadas. Cubra com um pano limpo ou gaze esterilizada úmida. Se a queimadura for maior que a palma da mão do paciente ou for no rosto, genitais ou articulações grandes, procure ajuda médica imediata."
+  },
+  {
+    "keywords": ["picada", "cobra", "serpente", "veneno", "peçonhento"],
+    "content": "Para picadas de cobra: Mantenha a vítima calma e o mais imóvel possível para retardar a absorção do veneno. Remova anéis ou roupas apertadas perto da picada. Lave a área com água e sabão. NÃO faça torniquetes, NÃO corte o local, NÃO tente chupar o veneno e NÃO aplique gelo. Leve a vítima imediatamente ao pronto-socorro ou posto de saúde mais próximo que possua soro antiofídico."
+  },
+  {
+    "keywords": ["engasgo", "engasgou", "asfixia", "sufocando"],
+    "content": "Para engasgos (Manobra de Heimlich em adultos conscientes): Posicione-se atrás da pessoa e abrace-a. Feche uma das mãos e posicione-a com o polegar virado para o abdômen, entre o umbigo e o osso do peito. Coloque a outra mão sobre a primeira e faça compressões rápidas e fortes para dentro e para cima (como se tentasse levantar a pessoa). Repita até o objeto ser expelido."
+  },
+  {
+    "keywords": ["corte", "sangramento", "hemorragia", "sangrando", "ferida"],
+    "content": "Para sangramentos intensos: Aplique pressão direta e constante sobre a ferida com um pano limpo ou gaze. Mantenha a pressão por pelo menos 5 a 10 minutos sem espiar. Se o pano encharcar, coloque outro por cima, sem remover o primeiro. Se possível, eleve o membro ferido acima do nível do coração. Procure ajuda médica se o sangramento não parar."
+  },
+  {
+    "keywords": ["desmaio", "desmaiou", "inconsciente", "perdeu os sentidos"],
+    "content": "Para desmaios: Se a pessoa não responder, verifique se está respirando. Se estiver respirando, deite-a de costas e eleve as pernas cerca de 30 cm do chão (se não houver suspeita de lesão na coluna). Afrouxe roupas apertadas. Se ela não acordar em 1 minuto, chame emergência. Se NÃO estiver respirando, inicie a RCP (Reanimação Cardiopulmonar) imediatamente."
+  },
+  {
+    "keywords": ["água", "sede", "desidratação", "purificar"],
+    "content": "Para purificar água em emergências: Ferva a água por pelo menos 1 minuto (3 minutos em altitudes elevadas). Se não puder ferver, use 2 gotas de água sanitária (sem perfume e sem sabão) por litro de água clara e espere 30 minutos. Se a água estiver turva, filtre usando um pano limpo antes de tratar."
+  }
+]
