@@ -26,6 +26,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val inferenceManager = GemmaInferenceManager(application)
     private val modelDownloader = ModelDownloader(application)
     private val localKnowledgeManager = com.example.gemma4good.data.LocalKnowledgeManager(application)
+    private val documentManager = com.example.gemma4good.data.DocumentStateManager(application)
 
     private val _state = MutableStateFlow<ChatState>(ChatState.LoadingModel)
     val state: StateFlow<ChatState> = _state
@@ -34,6 +35,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     val messages: StateFlow<List<Pair<String, Boolean>>> = _messages
 
     init {
+        loadRecentMemory()
         checkModelState()
     }
 
@@ -133,9 +135,83 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     _messages.value = updatedMessages
                 }
+                saveRecentMemory()
                 _state.value = ChatState.Idle
             } catch (e: Exception) {
                 _state.value = ChatState.Error(e.localizedMessage ?: "Erro desconhecido")
+            }
+        }
+    }
+
+    fun onDocumentScanned(extractedText: String) {
+        android.util.Log.d("OCR_TEXT", "Texto extraído: $extractedText")
+        val docId = "doc_${System.currentTimeMillis()}"
+        val newDoc = com.example.gemma4good.data.DocumentState(id = docId, extractedText = extractedText)
+        documentManager.saveDocument(newDoc)
+
+        val textToUser = "📄 Documento Digitalizado (ID: $docId)\n[Metadados extraídos e enviados ao Gemma]"
+        val currentMessages = _messages.value.toMutableList()
+        currentMessages.add(Pair(textToUser, true))
+        _messages.value = currentMessages
+
+        _state.value = ChatState.Generating
+
+        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é o Gemma Responder. O usuário acaba de enviar um documento extraído via OCR. Analise sucintamente o texto, identifique do que se trata (ex: laudo dermatológico, receita), pergunte se há complementos e confirme se podemos marcar como PRONTO PARA SINCRONIZAR."
+        val finalPrompt = "$systemPrompt\n\nTEXTO DO DOCUMENTO:\n$extractedText"
+
+        viewModelScope.launch {
+            try {
+                var firstToken = true
+                inferenceManager.generateResponse(finalPrompt).collect { token ->
+                    val updatedMessages = _messages.value.toMutableList()
+                    if (firstToken) {
+                        updatedMessages.add(Pair(token, false))
+                        firstToken = false
+                    } else {
+                        val lastMsg = updatedMessages.last()
+                        updatedMessages[updatedMessages.size - 1] = Pair(lastMsg.first + token, false)
+                    }
+                    _messages.value = updatedMessages
+                }
+                saveRecentMemory()
+                _state.value = ChatState.Idle
+            } catch (e: Exception) {
+                _state.value = ChatState.Error(e.localizedMessage ?: "Erro desconhecido")
+            }
+        }
+    }
+
+    private fun saveRecentMemory() {
+        val memoryFile = java.io.File(getApplication<Application>().getExternalFilesDir(null), "recent_memory.json")
+        try {
+            val jsonArray = org.json.JSONArray()
+            // Salva as últimas 20 mensagens para manter contexto recente
+            for (msg in _messages.value.takeLast(20)) { 
+                val item = org.json.JSONObject()
+                item.put("text", msg.first)
+                item.put("isUser", msg.second)
+                jsonArray.put(item)
+            }
+            memoryFile.writeText(jsonArray.toString(2))
+        } catch (e: Exception) {
+            android.util.Log.e("ChatViewModel", "Error saving memory", e)
+        }
+    }
+
+    private fun loadRecentMemory() {
+        val memoryFile = java.io.File(getApplication<Application>().getExternalFilesDir(null), "recent_memory.json")
+        if (memoryFile.exists()) {
+            try {
+                val jsonString = memoryFile.readText()
+                val jsonArray = org.json.JSONArray(jsonString)
+                val loadedMessages = mutableListOf<Pair<String, Boolean>>()
+                for (i in 0 until jsonArray.length()) {
+                    val item = jsonArray.getJSONObject(i)
+                    loadedMessages.add(Pair(item.getString("text"), item.getBoolean("isUser")))
+                }
+                _messages.value = loadedMessages
+            } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Error loading memory", e)
             }
         }
     }

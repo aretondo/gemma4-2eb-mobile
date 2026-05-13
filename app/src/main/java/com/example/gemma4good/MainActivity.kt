@@ -33,8 +33,13 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import android.graphics.Bitmap
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +76,7 @@ fun MainScreen(viewModel: ChatViewModel = viewModel()) {
             is ChatState.Downloading -> LoadingScreen("Baixando modelo Gemma 4 E2B do Hugging Face...\nVerifique suas notificações.")
             is ChatState.LoadingModel -> LoadingScreen("Inicializando o motor Gemma 4...")
             is ChatState.Error -> ErrorScreen((state as ChatState.Error).message) { viewModel.startDownload() }
-            else -> ChatScreen(messages, state is ChatState.Generating) { viewModel.sendMessage(it) }
+            else -> ChatScreen(messages, state is ChatState.Generating, { viewModel.sendMessage(it) }, { viewModel.onDocumentScanned(it) })
         }
     }
 }
@@ -171,13 +176,31 @@ fun LoadingScreen(message: String) {
 }
 
 @Composable
-fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onSend: (String) -> Unit) {
+fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onSend: (String) -> Unit, onDocumentScanned: (String) -> Unit) {
     var text by remember { mutableStateOf("") }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val context = LocalContext.current
     var isListening by remember { mutableStateOf(false) }
 
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
+    val textRecognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+    
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            val image = InputImage.fromBitmap(bitmap, 0)
+            textRecognizer.process(image)
+                .addOnSuccessListener { visionText ->
+                    if (visionText.text.isNotBlank()) {
+                        onDocumentScanned(visionText.text)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    android.util.Log.e("OCR", "Text recognition failed", e)
+                }
+        }
+    }
     
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -236,6 +259,16 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
                 )
             )
             if (text.isBlank()) {
+                IconButton(
+                    onClick = { cameraLauncher.launch(null) },
+                    enabled = !isGenerating
+                ) {
+                    Icon(
+                        Icons.Default.CameraAlt,
+                        contentDescription = "Digitalizar Documento",
+                        tint = Color(0xFF2979FF)
+                    )
+                }
                 IconButton(
                     onClick = {
                         val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)

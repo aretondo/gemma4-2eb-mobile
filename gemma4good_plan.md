@@ -40,9 +40,14 @@ Abaixo está o plano dividido em _chunks_ pequenos. Ao pedir para o Flash execut
 *   [x] **System Prompt & Contexto:** Codificar *system prompts* fortes que limitem a atuação do Gemma ao escopo do app. (Prompt do 'Gemma Responder' implementado no ChatViewModel).
 *   [x] **(Opcional mas Recomendado) RAG Simples:** Criar uma mecânica para injetar informações locais (ex: leitura de um arquivo JSON estático de primeiros socorros) no prompt antes de enviá-lo ao Gemma. (Implementado LocalKnowledgeManager com knowledge_base.json).
 
-### Fase 4: Entregáveis do Hackathon (Próximos Passos)
-*   [ ] **Polimento da Interface:** Melhorar a UI do Chat (ex: ícone de gravação ativo, feedback de voz, cores).
-*   [ ] **Testes de Campo (Emulador/Device):** Testar conversas offline, validar se o RAG é acionado corretamente pelas palavras-chave (ex: queimadura, engasgo).
+### Fase 4: Ingestão de Documentos (OCR) e Gestão de Estado
+*   [x] **Integração OCR:** Adicionar ML Kit Text Recognition. Implementar botão na UI para abrir a câmera, tirar foto de um documento médico e extrair o texto.
+*   [x] **UI de Metadados:** Exibir o documento no chat como um bloco colapsável (ex: `File[Metadados]`), garantindo que o texto extraído seja enviado ao Gemma como contexto.
+*   [x] **Processamento Padrão (Batch JSON):** Criar uma estrutura de dados (JSON) para acompanhar o status de cada documento ingerido (ex: `pendente`, `aguardando_complemento`, `pronto_sincronizacao`). O Gemma usará esse contexto para guiar a triagem ("é um laudo X, quer complementar?").
+*   [x] **Memória Recente:** Implementar um mecanismo para resumir e salvar as interações recentes, permitindo retomada fluida do trabalho e manutenção de longo contexto.
+
+### Fase 5: Entregáveis do Hackathon (Próximos Passos)
+*   [ ] **Polimento da Interface:** Melhorar a UI do Chat.
+*   [ ] **Testes de Campo (Emulador/Device):** Testar RAG e OCR offline.
 *   [ ] **Geração do APK:** Preparar o build final de Release.
-*   [ ] **Roteiro do Vídeo Pitch:** Escrever um roteiro de 3 minutos focando na história: "Um paramédico voluntário em área remota sem sinal usando o Gemma Responder para salvar vidas."
-*   [ ] **Writeup Técnico e README:** Preparar a submissão para o Kaggle detalhando a arquitetura LiteRT, RAG local e impacto social do projeto.
+*   [ ] **Pitch e Writeup:** Roteiro de vídeo e documentação técnica para o Kaggle.
