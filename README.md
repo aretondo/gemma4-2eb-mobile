@@ -15,8 +15,29 @@
 2. **Tela "See It"**: Edição estruturada de documentos para corrigir OCR ou análises da IA antes da sincronização.
 3. **Atalhos no Chat**: Botão "Visualizar Metadados" integrado às respostas do Gemma para acesso rápido à edição.
 4. **Local Sync Backend**: Servidor FastAPI + Streamlit para gerenciar documentos e prompts remotamente.
+5. **Sync Multi-Imagens**: O backend agora suporta o recebimento de múltiplas imagens por documento via Base64.
 
-## 📂 Estrutura do Projeto
+## 📲 Integração Android (Multi-Imagens)
+
+Para enviar as imagens do APK para o backend, use o campo `images` (array de strings Base64) no JSON de sincronização:
+
+```kotlin
+// Exemplo de payload JSON no Android
+val payload = JSONObject().apply {
+    put("id", doc.id)
+    put("extractedText", doc.extractedText)
+    put("syncStatus", "READY")
+    // Array de imagens convertidas para Base64
+    put("images", JSONArray(listOf(base64Image1, base64Image2))) 
+}
+
+// Chamada via OkHttp
+val request = Request.Builder()
+    .url("http://<IP_DO_PC>:8000/sync")
+    .post(payload.toString().toRequestBody("application/json".toMediaType()))
+    .build()
+```
+
 
 - `/app`: Código-fonte da aplicação Android (Kotlin + Jetpack Compose).
 - `/streamlit_backend`: Servidor de sincronização e painel administrativo (Python).

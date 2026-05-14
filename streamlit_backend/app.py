@@ -261,6 +261,19 @@ with tab1:
                         key=f"ctx_{doc_id}",
                         label_visibility="collapsed"
                     )
+                
+                # Exibição das imagens recebidas
+                saved_images = doc.get("saved_images", [])
+                if saved_images:
+                    st.markdown(f"**Imagens capturadas ({len(saved_images)}):**")
+                    img_cols = st.columns(min(len(saved_images), 4))
+                    for idx, img_rel_path in enumerate(saved_images):
+                        with img_cols[idx % 4]:
+                            # O Streamlit pode servir arquivos locais se o caminho for relativo ou via st.image
+                            img_abs_path = BASE_DIR / img_rel_path
+                            if img_abs_path.exists():
+                                st.image(str(img_abs_path), use_container_width=True)
+
 
                 with st.expander("🔍 JSON completo"):
                     st.json(doc)

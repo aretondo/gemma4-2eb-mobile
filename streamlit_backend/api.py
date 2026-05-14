@@ -16,12 +16,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import base64
+
 # ── Caminhos ──────────────────────────────────────────────────────────────────
 BASE_DIR   = Path(__file__).parent
 SYNC_DIR   = BASE_DIR / "synced_docs"
+IMAGES_DIR = BASE_DIR / "received_images"
 PROMPT_FILE = BASE_DIR / "prompts.json"
 
 SYNC_DIR.mkdir(exist_ok=True)
+IMAGES_DIR.mkdir(exist_ok=True)
 
 # Garante que prompts.json existe
 if not PROMPT_FILE.exists():
@@ -33,7 +37,7 @@ if not PROMPT_FILE.exists():
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Gemma4Good Backend API",
-    version="1.0.0",
+    version="1.1.0",
     description="Sync sink e gerenciador de prompts para o app Gemma4Good."
 )
 
@@ -48,7 +52,8 @@ app.add_middleware(
 class DocumentState(BaseModel):
     id: str | None = None
     extractedText: str = ""
-    imagePath: str | None = None
+    imagePath: str | None = None  # Mantido por retrocompatibilidade
+    images: list[str] = []        # Novo campo: Array de imagens em Base64
     context: str = ""
     syncStatus: str = "PENDING"
     timestamp: str | None = None
@@ -73,15 +78,37 @@ def health():
 
 @app.post("/sync", status_code=201)
 def receive_document(doc: DocumentState):
-    """Recebe um DocumentState JSON do app e persiste em disco."""
+    """Recebe um DocumentState JSON com imagens em Base64 e persiste."""
     doc_id = doc.id or f"doc_{uuid.uuid4().hex[:8]}"
     doc_dict = doc.model_dump()
     doc_dict["id"] = doc_id
     doc_dict["received_at"] = datetime.utcnow().isoformat()
+    
+    # Processar array de imagens
+    saved_image_paths = []
+    for i, b64_str in enumerate(doc.images):
+        try:
+            # Remove header data:image/jpeg;base64, se existir
+            if "," in b64_str:
+                b64_str = b64_str.split(",")[1]
+            
+            img_data = base64.b64decode(b64_str)
+            img_filename = f"{doc_id}_{i}.jpg"
+            img_path = IMAGES_DIR / img_filename
+            img_path.write_bytes(img_data)
+            saved_image_paths.append(str(img_path.relative_to(BASE_DIR)))
+        except Exception as e:
+            print(f"Erro ao processar imagem {i}: {e}")
+
+    # Atualiza o dicionário com os caminhos locais dos arquivos salvos (opcional, para UI)
+    doc_dict["saved_images"] = saved_image_paths
+    # Remove as strings base64 gigantes antes de salvar o JSON para não explodir o tamanho
+    doc_dict.pop("images", None)
 
     dest = SYNC_DIR / f"{doc_id}.json"
     dest.write_text(json.dumps(doc_dict, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {"status": "received", "id": doc_id}
+    return {"status": "received", "id": doc_id, "images_count": len(saved_image_paths)}
+
 
 
 @app.get("/sync")

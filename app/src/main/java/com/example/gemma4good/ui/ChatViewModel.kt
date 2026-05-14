@@ -56,7 +56,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun fetchSystemPrompts() {
         viewModelScope.launch(Dispatchers.IO) {
-            promptManager.fetchPrompts("10.0.2.2")
+            promptManager.fetchPrompts("192.168.68.102")
         }
     }
 
@@ -144,7 +144,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        val systemPrompt = promptManager.getChatPrompt() + "\n\nIMPORTANTE: Se o usuário pedir para marcar o documento atual como pronto, finalizado ou pronto para sincronizar, inclua EXATAMENTE a tag [SET_STATUS:READY] na sua resposta. Se ele pedir para cancelar ou marcar como pendente, use [SET_STATUS:PENDING]."
+        val systemPrompt = promptManager.getChatPrompt() + "\n\nIMPORTANTE: Se o usuário pedir para marcar o documento como pronto ou pendente, você DEVE responder com uma confirmação amigável E incluir a tag correspondente (ex: [SET_STATUS:READY]). NUNCA responda apenas com a tag."
         
         val finalPrompt = if (ragContext.isNotEmpty() || docContext.isNotEmpty()) {
             "$systemPrompt\n\n[CONTEXTO RELEVANTE]:\n$ragContext$docContext\n\n[DADOS/PERGUNTA DO PROFISSIONAL]: $text"
@@ -158,30 +158,50 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 var fullResponse = ""
                 inferenceManager.generateResponse(finalPrompt).collect { token ->
                     fullResponse += token
+                    
+                    // Remove tags do texto exibido ao usuário
+                    val cleanText = fullResponse
+                        .replace("[SET_STATUS:READY]", "")
+                        .replace("[SET_STATUS:PENDING]", "")
+                        .trim()
+
                     val updatedMessages = _messages.value.toMutableList()
-                    if (firstToken) {
-                        updatedMessages.add(ChatMessage(token, false))
-                        firstToken = false
-                    } else {
-                        val lastMsg = updatedMessages.last()
-                        updatedMessages[updatedMessages.size - 1] = lastMsg.copy(text = lastMsg.text + token)
+                    if (cleanText.isNotBlank()) {
+                        if (firstToken) {
+                            updatedMessages.add(ChatMessage(cleanText, false))
+                            firstToken = false
+                        } else {
+                            if (updatedMessages.isNotEmpty()) {
+                                val lastMsg = updatedMessages.last()
+                                if (!lastMsg.isUser) {
+                                    updatedMessages[updatedMessages.size - 1] = lastMsg.copy(text = cleanText)
+                                } else {
+                                    updatedMessages.add(ChatMessage(cleanText, false))
+                                }
+                            }
+                        }
+                        _messages.value = updatedMessages
                     }
-                    _messages.value = updatedMessages
                 }
 
-                // Processar tags de comando na resposta da IA
+                // Processar tags de comando na resposta final
+                android.util.Log.d("ChatViewModel", "Processing final response tags. FullResponse length: ${fullResponse.length}")
                 if (fullResponse.contains("[SET_STATUS:READY]")) {
+                    android.util.Log.d("ChatViewModel", "Tag [SET_STATUS:READY] detected")
                     currentDocumentId?.let { docId ->
                         documentManager.getDocuments().find { it.id == docId }?.let { doc ->
                             updateDocument(doc.copy(status = "READY"))
-                        }
-                    }
+                            android.util.Log.d("ChatViewModel", "Document $docId status updated to READY")
+                        } ?: android.util.Log.w("ChatViewModel", "Document $docId not found for status update")
+                    } ?: android.util.Log.w("ChatViewModel", "currentDocumentId is null")
                 } else if (fullResponse.contains("[SET_STATUS:PENDING]")) {
+                    android.util.Log.d("ChatViewModel", "Tag [SET_STATUS:PENDING] detected")
                     currentDocumentId?.let { docId ->
                         documentManager.getDocuments().find { it.id == docId }?.let { doc ->
                             updateDocument(doc.copy(status = "PENDING"))
-                        }
-                    }
+                            android.util.Log.d("ChatViewModel", "Document $docId status updated to PENDING")
+                        } ?: android.util.Log.w("ChatViewModel", "Document $docId not found for status update")
+                    } ?: android.util.Log.w("ChatViewModel", "currentDocumentId is null")
                 }
 
                 currentDocumentId?.let { docId ->
@@ -292,7 +312,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         refreshDocuments()
     }
 
-    fun syncData(serverIp: String = "10.0.2.2") {
+    fun syncData(serverIp: String = "192.168.68.102") {
         viewModelScope.launch(Dispatchers.IO) {
             val readyDocs = documentManager.getDocuments().filter { it.status == "READY" }
             if (readyDocs.isEmpty()) return@launch

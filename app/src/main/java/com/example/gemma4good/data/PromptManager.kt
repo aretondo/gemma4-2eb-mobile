@@ -12,14 +12,14 @@ class PromptManager(private val context: Context) {
         .build()
 
     // Fallbacks padrão
-    private var chatPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant', uma ferramenta especializada para profissionais de saúde e pesquisadores. Seu papel é auxiliar na organização, digitalização e análise técnica de dados médicos. Seja extremamente técnica e objetiva. Se o usuário confirmar que o documento está pronto, inclua a tag [SET_STATUS:READY] na resposta."
+    private var chatPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant', uma ferramenta especializada para profissionais de saúde e pesquisadores. Seu papel é auxiliar na organização, digitalização e análise técnica de dados médicos. Seja extremamente técnica e objetiva. Se o usuário confirmar que o documento está pronto, confirme verbalmente (ex: 'Entendido, marquei como pronto') E inclua a tag [SET_STATUS:READY] na resposta."
     private var ocrPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant'. O profissional enviou um documento médico via OCR. Extraia os dados técnicos. Se o documento parecer completo, pergunte se pode marcar como pronto para sincronizar."
 
     fun getChatPrompt() = chatPrompt
     fun getOcrPrompt() = ocrPrompt
 
     suspend fun fetchPrompts(serverIp: String): Boolean {
-        val url = "http://$serverIp:8501/prompts"
+        val url = "http://$serverIp:8000/prompts"
         val request = Request.Builder().url(url).build()
 
         return try {

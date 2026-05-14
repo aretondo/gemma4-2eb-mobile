@@ -17,15 +17,15 @@ class SyncManager(private val context: Context) {
 
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     
-    // IP do servidor Streamlit local (ajuste conforme necessário)
-    private var serverIp = "10.0.2.2" // Gateway padrão para o host do emulador Android
+    // IP da sua máquina local
+    private var serverIp = "192.168.68.102"
 
     fun setServerIp(ip: String) {
         serverIp = ip
     }
 
     suspend fun syncDocument(doc: DocumentState): Boolean {
-        val url = "http://$serverIp:8501/sync" // Endpoint proposto no blueprint
+        val url = "http://$serverIp:8000/sync" // Endpoint proposto no blueprint
         
         val json = JSONObject().apply {
             put("id", doc.id)
