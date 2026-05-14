@@ -180,12 +180,31 @@ fun MainScreen(viewModel: ChatViewModel, onSeeDocument: (String) -> Unit) {
 @Composable
 fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit, onSeeDocument: (String) -> Unit) {
     val documents by viewModel.documents.collectAsState()
-    
+    val context = LocalContext.current
+
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
         item {
-            Text("Meus Documentos", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Meus Documentos", style = MaterialTheme.typography.headlineMedium)
+                
+                Button(
+                    onClick = { 
+                        viewModel.syncData()
+                        android.widget.Toast.makeText(context, "Sincronizando...", android.widget.Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                ) {
+                    Icon(Icons.Default.CloudUpload, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Sync")
+                }
+            }
         }
         
         if (documents.isEmpty()) {
@@ -337,6 +356,10 @@ fun DocumentDetailScreen(
                 onClick = { status = if (status == "READY") "PENDING" else "READY" },
                 label = { Text(status) }
             )
+            if (status == "SYNCED") {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(Icons.Default.CloudDone, contentDescription = null, tint = Color.Green)
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

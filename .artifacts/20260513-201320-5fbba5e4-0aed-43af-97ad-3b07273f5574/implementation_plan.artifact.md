@@ -1,39 +1,52 @@
-# Implementation Plan - Advanced Features and Sync Strategy
+# Implementation Plan - Data Synchronization & Dynamic Prompts
 
-This plan covers UI enhancements (selectable text, metadata viewer, document editor) and the strategy for synchronization with a future local backend.
+This plan covers the integration of the Android app with the Streamlit/FastAPI backend to synchronize medical data and fetch updated system prompts.
 
 ## Proposed Changes
 
-### 1. UI Enhancements (Selection and Metadata)
+### 1. Networking Infrastructure
 
-#### [MainActivity.kt](file:///C:/repository/gemma4good/app/src/main/java/com/example/gemma4good/MainActivity.kt)
-- Wrap chat text in `SelectionContainer` to allow user selection and copying.
-- Update `ChatBubble` to show a "Metadata" summary icon or badge if `documentId` is present.
-- Create `DocumentDetailScreen` for the "See It" functionality.
-- Update `AppNavigation` to handle the new `Detail` screen.
+#### [libs.versions.toml](file:///C:/repository/gemma4good/gradle/libs.versions.toml)
+- Add OkHttp dependency for REST API communication.
+
+#### [build.gradle.kts](file:///C:/repository/gemma4good/app/build.gradle.kts)
+- Include OkHttp in dependencies.
+
+### 2. Synchronization Logic
+
+#### [NEW] [SyncManager.kt](file:///C:/repository/gemma4good/app/src/main/java/com/example/gemma4good/data/SyncManager.kt)
+- Responsible for:
+    - Sending all documents with status `READY` to the `/sync` endpoint.
+    - Updating local status to `SYNCED` upon success.
+    - Handling retry logic and offline errors.
 
 #### [ChatViewModel.kt](file:///C:/repository/gemma4good/app/src/main/java/com/example/gemma4good/ui/ChatViewModel.kt)
-- Add functions to update specific fields in a `DocumentState`.
-- Add state to track the currently being edited document.
+- Add a `syncData()` function.
+- Integrate with `SyncManager`.
 
-### 2. Document Editing ("See It")
+### 3. Dynamic Prompts
 
-#### [NEW] [DocumentDetailScreen.kt](file:///C:/repository/gemma4good/app/src/main/java/com/example/gemma4good/ui/DocumentDetailScreen.kt)
-- A new screen that parses the LLM-structured text (using a simple regex or JSON parser if structured) into editable `OutlinedTextField`s.
-- Features a "Save" button to commit changes back to `DocumentStateManager`.
+#### [NEW] [PromptManager.kt](file:///C:/repository/gemma4good/app/src/main/java/com/example/gemma4good/data/PromptManager.kt)
+- Fetches updated `system_prompts.json` from the backend `/prompts` endpoint.
+- Provides default fallbacks if the server is unreachable.
 
-### 3. Sync Strategy
+#### [ChatViewModel.kt](file:///C:/repository/gemma4good/app/src/main/java/com/example/gemma4good/ui/ChatViewModel.kt)
+- Fetch prompts at startup and store them in memory.
+- Use fetched prompts in `sendMessage` and `onDocumentScanned`.
 
-#### [NEW] [backend_blueprint.artifact.md](file:///C:/repository/gemma4good/.artifacts/20260513-201320-5fbba5e4-0aed-43af-97ad-3b07273f5574/backend_blueprint.artifact.md)
-- Define a simple REST API structure (POST `/sync`, GET `/prompts`).
-- Provide a Python/Streamlit starter script that receives JSON and stores it locally.
+### 4. UI Integration
+
+#### [MainActivity.kt](file:///C:/repository/gemma4good/app/src/main/java/com/example/gemma4good/MainActivity.kt)
+- Add a "Sync Now" button in the `FilesScreen` top bar or as a floating action button.
+- Show a loading indicator/toast during synchronization.
 
 ## Verification Plan
 
 ### Automated Tests
-- `./gradlew :app:compileDebugKotlin` to ensure UI changes don't break the build.
+- `./gradlew :app:compileDebugKotlin`
+- Unit tests for `SyncManager` using a mock web server if feasible.
 
 ### Manual Verification
-- **Text Selection:** Long-press text in chat to see selection handles.
-- **"See It" Flow:** Go to Files -> Click "See It" -> Edit a field -> Save -> Verify change in Files list.
-- **Sync Dry Run:** Verify log output for the proposed JSON structure that will be sent to the backend.
+- **Prompt Update:** Change a prompt in the Streamlit UI -> Restart App -> Verify AI behavior changes.
+- **Sync Flow:** Set 3 documents to `READY` -> Click Sync -> Verify they appear in the Streamlit dashboard and disappear/change status in the app.
+

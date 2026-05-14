@@ -48,9 +48,12 @@ Abaixo está o plano dividido em _chunks_ pequenos. Ao pedir para o Flash execut
 
 ### Fase 5: Sync Backend & Refinamentos de UI
 *   [x] **Backend Streamlit/FastAPI:** Criada pasta `streamlit_backend` com servidor para receber documentos e gerenciar prompts remotamente.
-*   [x] **Edição de Dados (See It):** Implementada tela para correção manual de OCR e metadados da IA.
-*   [x] **Copiar Texto:** Adicionado suporte a toque longo para cópia de mensagens no chat.
-*   [x] **Atalhos Reativos:** Botão de "Visualizar Metadados" integrado diretamente no balão de resposta do Gemma.
+*   [x] **Edição de Dados (See It):** Tela de edição com correção manual de OCR, metadados da IA e toggle de status (PENDING ↔ READY via FilterChip).
+*   [x] **Gemma Tool Use (Simulado):** O Gemma emite tags `[SET_STATUS:READY]` / `[SET_STATUS:PENDING]` que o app intercepta silenciosamente para atualizar o banco local.
+*   [x] **Copiar Texto:** Toque longo em mensagens do chat para copiar conteúdo.
+*   [x] **Atalhos Reativos:** Botão "Visualizar Metadados" no balão de resposta do Gemma.
+*   [x] **Prompts Atualizados:** Instrução da tag `[SET_STATUS]` injetada nos prompts base. O backend tem botão de injeção automática.
+*   [x] **Filtro por Tipo no Backend:** Documentos classificados como Laudo, Receita ou Exame com filtro lateral.
 
 ### Fase 6: Entregáveis do Hackathon (Próximos Passos)
 *   [ ] **Polimento Final:** Pequenos ajustes visuais.

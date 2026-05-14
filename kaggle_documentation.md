@@ -32,9 +32,21 @@ The app features a sophisticated document scanning system:
 
 ### 4. Smart Document Triage & UI Shortcuts
 When a document is scanned:
-- Gemma analyzes the text and identifies the document type.
-- **"Visualizar Metadados" Shortcut**: Direct access from the chat bubble to the structured data editor.
-- **Interactive Chat**: Support for long-press to copy any message, facilitating data reuse in other tools.
+- Gemma analyzes and classifies the document type (Laudo, Receita, Exame).
+- **"Visualizar Metadados" Shortcut**: Tap the button directly in the chat bubble to jump to the structured data editor.
+- **Interactive Chat**: Long-press any message to copy it, enabling quick data reuse.
+
+### 4.1 Gemma Tool Use (Simulated)
+Implemented a lightweight command protocol inside the LLM response stream:
+- The model can emit invisible control tags like `[SET_STATUS:READY]` or `[SET_STATUS:PENDING]`.
+- The app intercepts and strips the tag before rendering, silently updating the local `DocumentState`.
+- Natural language triggers: *"pode marcar como pronto"* or *"marcar como pendente"* reliably activate the behavior.
+- The Streamlit backend's Prompt Manager includes an **Inject SET_STATUS** button to append the tag instruction to any prompt without manual editing.
+
+### 4.2 "See It" Status Control
+- In the Files screen, the **See It** button opens a structured editor for OCR text and AI analysis.
+- A `FilterChip` displays the current status and **toggles between PENDING ↔ READY** on tap.
+- Synced documents show a green cloud icon (☁️) and the status field becomes read-only.
 
 ### 5. Local Backend & Sync (Streamlit)
 To bridge the gap between offline collection and centralized data:
@@ -46,6 +58,7 @@ To bridge the gap between offline collection and centralized data:
 - Multi-user authentication for the backend.
 - End-to-end encryption for the sync payloads.
 - Integration with FHIR standards for medical data export.
+- Extend Gemma Tool Use to support structured data extraction commands (e.g., `[EXTRACT:DATE]`, `[EXTRACT:MEDICATION]`).
 
 
 ---

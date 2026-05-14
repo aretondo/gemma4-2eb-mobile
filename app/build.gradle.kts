@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.litertlm.android)
     implementation(libs.mlkit.text.recognition)
     implementation(libs.coil.compose)
+    implementation(libs.okhttp)
     
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

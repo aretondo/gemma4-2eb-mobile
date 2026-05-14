@@ -30,6 +30,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val modelDownloader = ModelDownloader(application)
     private val localKnowledgeManager = com.example.gemma4good.data.LocalKnowledgeManager(application)
     private val documentManager = com.example.gemma4good.data.DocumentStateManager(application)
+    private val syncManager = com.example.gemma4good.data.SyncManager(application)
+    private val promptManager = com.example.gemma4good.data.PromptManager(application)
 
     private val _state = MutableStateFlow<ChatState>(ChatState.LoadingModel)
     val state: StateFlow<ChatState> = _state
@@ -49,6 +51,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         loadRecentMemory()
         checkModelState()
         refreshDocuments()
+        fetchSystemPrompts()
+    }
+
+    private fun fetchSystemPrompts() {
+        viewModelScope.launch(Dispatchers.IO) {
+            promptManager.fetchPrompts("10.0.2.2")
+        }
     }
 
     fun refreshDocuments() {
@@ -135,7 +144,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
-        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant', uma ferramenta especializada para profissionais de saúde e pesquisadores. Seu papel é auxiliar na organização, digitalização e análise técnica de dados médicos. Seja extremamente técnica, objetiva e direta. Não dê conselhos médicos, não dê lições de moral e não sugira encaminhamentos a pacientes. Foque na extração de dados e síntese técnica das informações fornecidas. Você também pode informar ao usuário que ele pode excluir documentos pendentes na aba de Arquivos se necessário."
+        val systemPrompt = promptManager.getChatPrompt() + "\n\nIMPORTANTE: Se o usuário pedir para marcar o documento atual como pronto, finalizado ou pronto para sincronizar, inclua EXATAMENTE a tag [SET_STATUS:READY] na sua resposta. Se ele pedir para cancelar ou marcar como pendente, use [SET_STATUS:PENDING]."
         
         val finalPrompt = if (ragContext.isNotEmpty() || docContext.isNotEmpty()) {
             "$systemPrompt\n\n[CONTEXTO RELEVANTE]:\n$ragContext$docContext\n\n[DADOS/PERGUNTA DO PROFISSIONAL]: $text"
@@ -158,6 +167,21 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         updatedMessages[updatedMessages.size - 1] = lastMsg.copy(text = lastMsg.text + token)
                     }
                     _messages.value = updatedMessages
+                }
+
+                // Processar tags de comando na resposta da IA
+                if (fullResponse.contains("[SET_STATUS:READY]")) {
+                    currentDocumentId?.let { docId ->
+                        documentManager.getDocuments().find { it.id == docId }?.let { doc ->
+                            updateDocument(doc.copy(status = "READY"))
+                        }
+                    }
+                } else if (fullResponse.contains("[SET_STATUS:PENDING]")) {
+                    currentDocumentId?.let { docId ->
+                        documentManager.getDocuments().find { it.id == docId }?.let { doc ->
+                            updateDocument(doc.copy(status = "PENDING"))
+                        }
+                    }
                 }
 
                 currentDocumentId?.let { docId ->
@@ -195,7 +219,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         _state.value = ChatState.Generating
 
-        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant'. O profissional enviou um documento médico via OCR. Sua tarefa é: 1. Identificar tecnicamente o tipo de documento. 2. Extrair dados estruturados (valores de exames, nomes de medicamentos, datas). 3. Perguntar se há dados adicionais para completar a ficha. Seja técnica e não emita opiniões clínicas ou recomendações de saúde. Se o texto estiver vazio, informe que a captura falhou."
+        val systemPrompt = promptManager.getOcrPrompt()
         val finalPrompt = if (extractedText.isNotBlank()) {
             "$systemPrompt\n\n[TEXTO BRUTO DO OCR]:\n$extractedText"
         } else {
@@ -266,6 +290,26 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun updateDocument(doc: DocumentState) {
         documentManager.saveDocument(doc)
         refreshDocuments()
+    }
+
+    fun syncData(serverIp: String = "10.0.2.2") {
+        viewModelScope.launch(Dispatchers.IO) {
+            val readyDocs = documentManager.getDocuments().filter { it.status == "READY" }
+            if (readyDocs.isEmpty()) return@launch
+            
+            syncManager.setServerIp(serverIp)
+            var successCount = 0
+            for (doc in readyDocs) {
+                if (syncManager.syncDocument(doc)) {
+                    documentManager.saveDocument(doc.copy(status = "SYNCED"))
+                    successCount++
+                }
+            }
+            withContext(Dispatchers.Main) {
+                refreshDocuments()
+                // Aqui poderíamos emitir um evento para a UI mostrar um Toast
+            }
+        }
     }
 
     private fun saveRecentMemory() {
