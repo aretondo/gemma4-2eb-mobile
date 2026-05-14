@@ -16,8 +16,11 @@ Nos campos de batalha dos consultórios, o papel ainda reina. O Gemma recebeu o 
 ## Capítulo IV: O Arquivo de Espera (Interface & Sync)
 A armadura do escrivão (Material 3) foi forjada para ser prática e organizada. Através do **Drawer Menu**, o profissional acessa o "Arsenal de Arquivos" — documentos digitalizados que aguardam o momento em que os fios invisíveis da rede retornem. Cada arquivo pendente é um fragmento de história pronto para ser sincronizado com o reino central, garantindo que o trabalho offline seja tão valioso quanto o online.
 
-## Capítulo V: A Magia do "Use it" (Contexto Persistente)
-A maior virtude do nosso Escrivão é a memória. Através do botão "Use it", o Gemma mergulha de volta no contexto de um documento específico. Ele lembra das conversas passadas, dos chunks de treino relacionados e dos dados extraídos, permitindo que o profissional refine a análise, complete as fichas e prepare o lote perfeito para a sincronização final.
+## Capítulo VI: O Espelho da Verdade (Edição e Backend)
+À medida que o escrivão evoluía, surgiu a necessidade de refinar a realidade. Através do comando "See It", o profissional agora pode abrir o coração de cada documento. Não é apenas uma leitura; é uma oficina onde o texto extraído pelo OCR e a análise da IA podem ser corrigidos, garantindo que a verdade médica seja absoluta antes do selo final de "READY". 
+
+E para que essas histórias não fiquem presas no dispositivo, erguemos a **Torre de Observação (Streamlit Backend)**. Um portal local onde, via Wi-Fi, os documentos fluem do celular para um painel central. Lá, os mestres podem não apenas visualizar os dados sincronizados, mas também ditar os novos "Prompts de Poder" que guiarão o Gemma em suas futuras jornadas.
 
 ## O Epílogo: A Sincronia do Amanhã
-O **Gemma 4 Good** termina o dia com seu batch de documentos pronto. Ele prova que, no silêncio do offline, a inteligência artificial pode ser a ferramenta que faltava para digitalizar a saúde, organizar o caos e preparar o caminho para que, na próxima conexão, o conhecimento seja compartilhado e vidas sejam salvas.
+O **Gemma 4 Good** termina o dia com sua armadura polida e seus registros perfeitos. Com a nova capacidade de copiar textos com um toque longo e visualizar metadados instantaneamente pelo chat, a fluidez do trabalho alcançou um novo patamar. Ele prova que, no silêncio do offline, a inteligência artificial pode ser a ferramenta que faltava para digitalizar a saúde, organizar o caos e preparar o caminho para que, na próxima conexão, o conhecimento seja compartilhado e vidas sejam salvas.
+

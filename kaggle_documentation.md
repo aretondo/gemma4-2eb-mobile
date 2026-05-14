@@ -12,8 +12,9 @@ This project aims to leverage **Gemma 4** (Effective 2B) to provide a robust, of
 - **Engine**: Google LiteRT (formerly TensorFlow Lite) via `litertlm-android`.
 - **OCR**: Google ML Kit Text Recognition V2 (Latin).
 - **Framework**: Jetpack Compose (Material 3).
-- **Memory**: Persistent JSON-based session memory and document batch tracking.
-- **Language**: Kotlin.
+- **Backend**: Python (FastAPI + Streamlit) for local data synchronization and prompt management.
+- **Persistence**: Persistent JSON-based session memory, document batch tracking, and local file storage for scanned images.
+- **Language**: Kotlin (Android) and Python (Backend).
 
 ## 📈 Key Features & Implementation Steps
 
@@ -23,27 +24,29 @@ We implemented a `ModelDownloader` that fetches the Gemma 2B model directly from
 ### 2. Local Knowledge Base (RAG-lite)
 To improve survival guidance, we integrated a `LocalKnowledgeManager` that acts as a local reference. It matches user queries against a pre-defined JSON knowledge base (e.g., first aid protocols) and injects relevant context into the Gemma prompt.
 
-### 3. Advanced OCR Pipeline (V2)
+### 3. Advanced OCR Pipeline (V2) & Editing
 The app features a sophisticated document scanning system:
 - **ML Kit V2 (Latin)**: Upgraded to the latest standalone SDK for higher accuracy.
-- **Image Pre-processing**: We implemented an `enhanceContrast` helper that applies grayscale and contrast adjustment using `ColorMatrix` before OCR, significantly improving text extraction from low-light medical receipts or reports.
-- **Persistence**: Every scan is saved as a `DocumentState` in a local batch file (`sync_batch.json`).
+- **See It (Structured Editor)**: A dedicated screen where professionals can review and manually correct OCR text and AI-generated analysis.
+- **Status Management**: Support for marking documents as `PENDING` or `READY` for sync.
 
-### 4. Smart Document Triage
+### 4. Smart Document Triage & UI Shortcuts
 When a document is scanned:
-- A thumbnail is generated and displayed in the chat.
-- Gemma analyzes the extracted text to identify the document type (e.g., prescription, lab result).
-- The conversation context is saved per document, allowing the user to "Use it" later to resume a specific triage case.
+- Gemma analyzes the text and identifies the document type.
+- **"Visualizar Metadados" Shortcut**: Direct access from the chat bubble to the structured data editor.
+- **Interactive Chat**: Support for long-press to copy any message, facilitating data reuse in other tools.
 
-### 5. Premium Material 3 Interface
-- **Modern Navigation**: Fixed `TopAppBar` and a `ModalNavigationDrawer` for seamless switching between Chat and the Files history.
-- **Responsive Layout**: A clean, adaptive chat interface that feels alive with auto-scrolling and real-time generation feedback.
-- **Files Management**: A dedicada tela de "Arquivos" agora suporta a exclusão de documentos com atualização reativa da lista via `StateFlow`.
+### 5. Local Backend & Sync (Streamlit)
+To bridge the gap between offline collection and centralized data:
+- **FastAPI Sync Sink**: A local server that receives synced batches from the app.
+- **Prompt Manager**: A Streamlit dashboard to edit the system prompts (Chat and OCR) dynamically without rebuilding the Android app.
+- **Visual Analytics**: Real-time view of all received documents and their structured data.
 
 ## 🧪 Future Improvements
-- Full-screen OCR preview with highlighted text areas.
-- Support for multiple languages in the knowledge base.
-- Integration with external synchronization APIs when internet becomes available.
+- Multi-user authentication for the backend.
+- End-to-end encryption for the sync payloads.
+- Integration with FHIR standards for medical data export.
+
 
 ---
 

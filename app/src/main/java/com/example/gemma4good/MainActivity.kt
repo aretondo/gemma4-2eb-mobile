@@ -17,7 +17,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -120,9 +123,27 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
                 when (currentScreen) {
-                    "Chat" -> MainScreen(viewModel)
-                    "Files" -> FilesScreen(viewModel) {
+                    "Chat" -> MainScreen(viewModel, onSeeDocument = { docId ->
+                        viewModel.selectedDocumentId.value = docId
+                        currentScreen = "Detail"
+                    })
+                    "Files" -> FilesScreen(viewModel, onUseDocument = {
                         currentScreen = "Chat"
+                    }, onSeeDocument = { docId ->
+                        viewModel.selectedDocumentId.value = docId
+                        currentScreen = "Detail"
+                    })
+                    "Detail" -> {
+                        val docId = viewModel.selectedDocumentId.value
+                        val doc = viewModel.documents.collectAsState().value.find { it.id == docId }
+                        if (doc != null) {
+                            DocumentDetailScreen(doc, onSave = { updatedDoc ->
+                                viewModel.updateDocument(updatedDoc)
+                                currentScreen = "Files"
+                            }, onBack = {
+                                currentScreen = "Files"
+                            })
+                        }
                     }
                 }
             }
@@ -131,7 +152,7 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
 }
 
 @Composable
-fun MainScreen(viewModel: ChatViewModel) {
+fun MainScreen(viewModel: ChatViewModel, onSeeDocument: (String) -> Unit) {
     val state by viewModel.state.collectAsState()
     val messages by viewModel.messages.collectAsState()
 
@@ -149,14 +170,15 @@ fun MainScreen(viewModel: ChatViewModel) {
                 messages = messages,
                 isGenerating = state is ChatState.Generating,
                 onSend = { viewModel.sendMessage(it) },
-                onDocumentScanned = { text, path -> viewModel.onDocumentScanned(text, path) }
+                onDocumentScanned = { text, path -> viewModel.onDocumentScanned(text, path) },
+                onSeeDocument = onSeeDocument
             )
         }
     }
 }
 
 @Composable
-fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit) {
+fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit, onSeeDocument: (String) -> Unit) {
     val documents by viewModel.documents.collectAsState()
     
     LazyColumn(
@@ -217,23 +239,121 @@ fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit) {
                         
                         Spacer(modifier = Modifier.width(8.dp))
                         
-                        IconButton(onClick = {
-                            viewModel.deleteDocument(doc.id)
-                        }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Excluir", tint = Color.Red)
-                        }
-                        
-                        Spacer(modifier = Modifier.width(8.dp))
-                        
-                        Button(onClick = {
-                            viewModel.useDocument(doc.id)
-                            onUseDocument()
-                        }) {
-                            Text("Use it")
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            IconButton(onClick = {
+                                viewModel.deleteDocument(doc.id)
+                            }) {
+                                Icon(Icons.Default.Delete, contentDescription = "Excluir", tint = Color.Red)
+                            }
+                            
+                            Button(
+                                onClick = { onSeeDocument(doc.id) },
+                                modifier = Modifier.padding(bottom = 4.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("See It", fontSize = 12.sp)
+                            }
+
+                            Button(
+                                onClick = {
+                                    viewModel.useDocument(doc.id)
+                                    onUseDocument()
+                                },
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text("Use It", fontSize = 12.sp)
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DocumentDetailScreen(
+    document: com.example.gemma4good.data.DocumentState,
+    onSave: (com.example.gemma4good.data.DocumentState) -> Unit,
+    onBack: () -> Unit
+) {
+    var editedText by remember { mutableStateOf(document.extractedText) }
+    var editedContext by remember { mutableStateOf(document.context) }
+    var status by remember { mutableStateOf(document.status) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(androidx.compose.foundation.rememberScrollState())
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onBack) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+            }
+            Text("Editar Documento", style = MaterialTheme.typography.headlineSmall)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (document.imagePath != null) {
+            AsyncImage(
+                model = File(document.imagePath),
+                contentDescription = "Documento",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Fit
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        Text("Texto Extraído (OCR)", fontWeight = FontWeight.Bold)
+        OutlinedTextField(
+            value = editedText,
+            onValueChange = { editedText = it },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
+            label = { Text("Correção de OCR") }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Análise do Gemma / Contexto", fontWeight = FontWeight.Bold)
+        OutlinedTextField(
+            value = editedContext,
+            onValueChange = { editedContext = it },
+            modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
+            label = { Text("Dados Estruturados") }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Status de Sincronização: ", fontWeight = FontWeight.Bold)
+            FilterChip(
+                selected = status == "READY",
+                onClick = { status = if (status == "READY") "PENDING" else "READY" },
+                label = { Text(status) }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = {
+                onSave(document.copy(
+                    extractedText = editedText,
+                    context = editedContext,
+                    status = status
+                ))
+            },
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+        ) {
+            Icon(Icons.Default.Save, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("SALVAR ALTERAÇÕES")
         }
     }
 }
@@ -312,7 +432,8 @@ fun ChatScreen(
     messages: List<ChatMessage>,
     isGenerating: Boolean,
     onSend: (String) -> Unit,
-    onDocumentScanned: (String, String?) -> Unit
+    onDocumentScanned: (String, String?) -> Unit,
+    onSeeDocument: (String) -> Unit
 ) {
     var text by remember { mutableStateOf("") }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -394,7 +515,7 @@ fun ChatScreen(
             reverseLayout = false
         ) {
             items(messages) { message ->
-                ChatBubble(message)
+                ChatBubble(message, onSeeDocument)
             }
             if (isGenerating) {
                 item {
@@ -465,7 +586,7 @@ fun ChatScreen(
 }
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(message: ChatMessage, onSeeMetadata: (String) -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -494,10 +615,24 @@ fun ChatBubble(message: ChatMessage) {
                         contentScale = ContentScale.Crop
                     )
                 }
-                Text(
-                    text = message.text,
-                    color = if (message.isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                SelectionContainer {
+                    Text(
+                        text = message.text,
+                        color = if (message.isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (message.documentId != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Visualizar Metadados",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (message.isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            onSeeMetadata(message.documentId)
+                        }
+                    )
+                }
             }
         }
     }

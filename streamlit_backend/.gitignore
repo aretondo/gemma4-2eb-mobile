@@ -1,0 +1,5 @@
+synced_docs/
+__pycache__/
+*.pyc
+.venv/
+.env

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.runtime.mutableStateOf
 
 sealed class ChatState {
     object ModelMissing : ChatState()
@@ -40,6 +41,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     val documents: StateFlow<List<DocumentState>> = _documents
 
     var currentDocumentId: String? = null
+    var selectedDocumentId = mutableStateOf<String?>(null)
 
     fun getDocumentManager() = documentManager
 
@@ -259,6 +261,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         if (currentDocumentId == docId) {
             currentDocumentId = null
         }
+    }
+
+    fun updateDocument(doc: DocumentState) {
+        documentManager.saveDocument(doc)
+        refreshDocuments()
     }
 
     private fun saveRecentMemory() {

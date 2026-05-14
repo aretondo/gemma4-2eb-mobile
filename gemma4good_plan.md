@@ -46,8 +46,14 @@ Abaixo está o plano dividido em _chunks_ pequenos. Ao pedir para o Flash execut
 *   [x] **Processamento Padrão (Batch JSON):** Criar uma estrutura de dados (JSON) para acompanhar o status de cada documento ingerido (ex: `pendente`, `aguardando_complemento`, `pronto_sincronizacao`). O Gemma usará esse contexto para guiar a triagem ("é um laudo X, quer complementar?").
 *   [x] **Memória Recente:** Implementar um mecanismo para resumir e salvar as interações recentes, permitindo retomada fluida do trabalho e manutenção de longo contexto.
 
-### Fase 5: Entregáveis do Hackathon (Próximos Passos)
-*   [ ] **Polimento da Interface:** Melhorar a UI do Chat.
-*   [ ] **Testes de Campo (Emulador/Device):** Testar RAG e OCR offline.
-*   [ ] **Geração do APK:** Preparar o build final de Release.
-*   [ ] **Pitch e Writeup:** Roteiro de vídeo e documentação técnica para o Kaggle.
+### Fase 5: Sync Backend & Refinamentos de UI
+*   [x] **Backend Streamlit/FastAPI:** Criada pasta `streamlit_backend` com servidor para receber documentos e gerenciar prompts remotamente.
+*   [x] **Edição de Dados (See It):** Implementada tela para correção manual de OCR e metadados da IA.
+*   [x] **Copiar Texto:** Adicionado suporte a toque longo para cópia de mensagens no chat.
+*   [x] **Atalhos Reativos:** Botão de "Visualizar Metadados" integrado diretamente no balão de resposta do Gemma.
+
+### Fase 6: Entregáveis do Hackathon (Próximos Passos)
+*   [ ] **Polimento Final:** Pequenos ajustes visuais.
+*   [ ] **Video Pitch:** Gravar demonstração do fluxo offline -> sync local.
+*   [ ] **Submissão:** Preparar repositório e documentação Kaggle.
+
