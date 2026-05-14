@@ -16,11 +16,16 @@ Nos campos de batalha dos consultórios, o papel ainda reina. O Gemma recebeu o 
 ## Capítulo IV: O Arquivo de Espera (Interface & Sync)
 A armadura do escrivão (Material 3) foi forjada para ser prática e organizada. Através do **Drawer Menu**, o profissional acessa o "Arsenal de Arquivos" — documentos digitalizados que aguardam o momento em que os fios invisíveis da rede retornem. Cada arquivo pendente é um fragmento de história pronto para ser sincronizado com o reino central, garantindo que o trabalho offline seja tão valioso quanto o online.
 
-## Capítulo VI: O Espelho da Verdade (Edição e Backend)
-À medida que o escrivão evoluía, surgiu a necessidade de refinar a realidade. Através do comando "See It", o profissional agora pode abrir o coração de cada documento. Não é apenas uma leitura; é uma oficina onde o texto extraído pelo OCR e a análise da IA podem ser corrigidos, garantindo que a verdade médica seja absoluta antes do selo final de "READY". 
+## Capítulo V: A Memória Compartilhada (Sessões & Chats)
+O Escrivão agora possui "Gavetas de Memória". Através do `DocumentState`, cada documento carrega seu próprio histórico de mensagens. Ao usar o comando "Use it", o Gemma não apenas vê o documento, mas lembra de cada palavra trocada naquela sessão específica. E para novos encontros, o comando "New Chat" limpa a mesa, permitindo que um novo relato comece do zero, com ou sem imagens.
 
-E para que essas histórias não fiquem presas no dispositivo, erguemos a **Torre de Observação (Streamlit Backend)**. Um portal local onde, via Wi-Fi, os documentos fluem do celular para um painel central. Lá, os mestres podem não apenas visualizar os dados sincronizados, mas também ditar os novos "Prompts de Poder" que guiarão o Gemma em suas futuras jornadas.
+## Capítulo VI: O Olho de Argus (Múltiplas Imagens)
+A visão do Gemma se expandiu. O antigo limite de uma única imagem foi superado; agora, o profissional pode anexar múltiplas fotos a um mesmo caso, permitindo uma análise holística de exames complexos ou ferimentos sob diferentes ângulos. O `DocumentStateManager` orquestra essa galeria, enquanto o `SyncManager` converte cada fragmento visual em Base64 para a jornada até o backend.
 
-## O Epílogo: A Sincronia do Amanhã
-O **Gemma 4 Good** termina o dia com sua armadura polida e seus registros perfeitos. Com a nova capacidade de copiar textos com um toque longo e visualizar metadados instantaneamente pelo chat, a fluidez do trabalho alcançou um novo patamar. Ele prova que, no silêncio do offline, a inteligência artificial pode ser a ferramenta que faltava para digitalizar a saúde, organizar o caos e preparar o caminho para que, na próxima conexão, o conhecimento seja compartilhado e vidas sejam salvas.
+## Capítulo VII: O Relato Puro (Casos sem Imagem)
+Nem toda cura precisa de fotos. O Gemma 4 Good agora entende o valor do relato clínico puro. Seja uma melhora relatada pelo paciente ou uma triagem baseada em sintomas verbais, o sistema permite a criação de documentos de texto, garantindo que o fluxo de digitalização nunca pare, mesmo quando a câmera descansa.
+
+## O Epílogo: A Sincronia Total
+O **Gemma 4 Good** encerra sua jornada como uma ferramenta completa. Com suporte a múltiplos chats, sessões persistentes e uma ponte robusta de Base64 com o backend, ele prova que a inteligência artificial de borda é o futuro da resiliência médica. No silêncio do offline ou no painel do Streamlit, a informação agora é fluida, estruturada e eterna.
+
 

@@ -81,6 +81,17 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
+                NavigationDrawerItem(
+                    label = { Text("Novo Chat") },
+                    selected = false,
+                    onClick = {
+                        viewModel.startNewChat()
+                        currentScreen = "Chat"
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
                 Divider()
                 NavigationDrawerItem(
                     label = { Text("Chat") },
@@ -112,6 +123,13 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
+                    },
+                    actions = {
+                        if (currentScreen == "Chat") {
+                            IconButton(onClick = { viewModel.startNewChat() }) {
+                                Icon(Icons.Default.Add, contentDescription = "Novo Chat")
+                            }
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -221,9 +239,10 @@ fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit, onSeeDocume
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (doc.imagePath != null) {
+                        val imagePath = doc.imagePaths.firstOrNull()
+                        if (imagePath != null) {
                             AsyncImage(
-                                model = File(doc.imagePath),
+                                model = File(imagePath),
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(64.dp)
@@ -316,9 +335,10 @@ fun DocumentDetailScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (document.imagePath != null) {
+        val imagePath = document.imagePaths.firstOrNull()
+        if (imagePath != null) {
             AsyncImage(
-                model = File(document.imagePath),
+                model = File(imagePath),
                 contentDescription = "Documento",
                 modifier = Modifier
                     .fillMaxWidth()

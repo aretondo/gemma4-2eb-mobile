@@ -24,35 +24,23 @@ We implemented a `ModelDownloader` that fetches the Gemma 2B model directly from
 ### 2. Local Knowledge Base (RAG-lite)
 To improve survival guidance, we integrated a `LocalKnowledgeManager` that acts as a local reference. It matches user queries against a pre-defined JSON knowledge base (e.g., first aid protocols) and injects relevant context into the Gemma prompt.
 
-### 3. Advanced OCR Pipeline (V2) & Editing
+### 3. Advanced OCR Pipeline (V2) & Multi-Image Support
 The app features a sophisticated document scanning system:
-- **ML Kit V2 (Latin)**: Upgraded to the latest standalone SDK for higher accuracy.
+- **Multi-Image Attachment**: Users can now attach multiple photos to a single case, allowing for comprehensive documentation of medical reports or patient conditions.
 - **See It (Structured Editor)**: A dedicated screen where professionals can review and manually correct OCR text and AI-generated analysis.
 - **Status Management**: Support for marking documents as `PENDING` or `READY` for sync.
 
-### 4. Smart Document Triage & UI Shortcuts
-When a document is scanned:
-- Gemma analyzes and classifies the document type (Laudo, Receita, Exame).
-- **"Visualizar Metadados" Shortcut**: Tap the button directly in the chat bubble to jump to the structured data editor.
-- **Interactive Chat**: Long-press any message to copy it, enabling quick data reuse.
+### 4. Multi-Session Chat & State Management
+- **Persistent Sessions**: `DocumentState` now stores its own list of messages, enabling per-document conversation history.
+- **Context Switching**: Using "Use it" on a document restores its specific chat history, while "New Chat" allows starting fresh clinical reports.
+- **Text-Only Reports**: Full support for clinical triage based on manual descriptions even without accompanying images.
+- **Gemma Tool Use (Simulated)**: The model can emit `[SET_STATUS:READY]` tags to automate status updates based on natural language confirmation.
 
-### 4.1 Gemma Tool Use (Simulated)
-Implemented a lightweight command protocol inside the LLM response stream:
-- The model can emit invisible control tags like `[SET_STATUS:READY]` or `[SET_STATUS:PENDING]`.
-- The app intercepts and strips the tag before rendering, silently updating the local `DocumentState`.
-- Natural language triggers: *"pode marcar como pronto"* or *"marcar como pendente"* reliably activate the behavior.
-- The Streamlit backend's Prompt Manager includes an **Inject SET_STATUS** button to append the tag instruction to any prompt without manual editing.
-
-### 4.2 "See It" Status Control
-- In the Files screen, the **See It** button opens a structured editor for OCR text and AI analysis.
-- A `FilterChip` displays the current status and **toggles between PENDING ↔ READY** on tap.
-- Synced documents show a green cloud icon (☁️) and the status field becomes read-only.
-
-### 5. Local Backend & Sync (Streamlit)
-To bridge the gap between offline collection and centralized data:
-- **FastAPI Sync Sink**: A local server that receives synced batches from the app.
-- **Prompt Manager**: A Streamlit dashboard to edit the system prompts (Chat and OCR) dynamically without rebuilding the Android app.
-- **Visual Analytics**: Real-time view of all received documents and their structured data.
+### 5. Local Backend & Sync (v1.1)
+The backend has been optimized for field consistency and performance:
+- **Aligned Data Model**: `DocumentState` now uses standardized field names (`extracted_text`, `gemma_diagnosis`, `status`) to match the Android client perfectly.
+- **Base64 Multi-Image Upload**: The `SyncManager` serializes all attached images into a Base64 `JSONArray`. The backend decodes them, saves them as `.jpg` files, and cleans up the JSON to maintain low disk usage.
+- **Prompt Manager**: Updated system prompts to guide Gemma in multi-image summarization and purely textual clinical reports.
 
 ## 🧪 Future Improvements
 - Multi-user authentication for the backend.
@@ -60,7 +48,7 @@ To bridge the gap between offline collection and centralized data:
 - Integration with FHIR standards for medical data export.
 - Extend Gemma Tool Use to support structured data extraction commands (e.g., `[EXTRACT:DATE]`, `[EXTRACT:MEDICATION]`).
 
-
 ---
 
 *This project is a demonstration of how edge AI can provide critical assistance in humanitarian and emergency contexts.*
+

@@ -10,8 +10,9 @@ data class DocumentState(
     val extractedText: String,
     var gemmaDiagnosis: String = "",
     var status: String = "PENDING",
-    val imagePath: String? = null,
-    var context: String = ""
+    val imagePaths: List<String> = emptyList(),
+    var context: String = "",
+    var messages: List<ChatMessage> = emptyList()
 )
 
 class DocumentStateManager(private val context: Context) {
@@ -28,14 +29,42 @@ class DocumentStateManager(private val context: Context) {
             
             for (i in 0 until jsonArray.length()) {
                 val item = jsonArray.getJSONObject(i)
+                val imagePathsList = mutableListOf<String>()
+                if (item.has("image_paths")) {
+                    val pathsArray = item.getJSONArray("image_paths")
+                    for (j in 0 until pathsArray.length()) {
+                        imagePathsList.add(pathsArray.getString(j))
+                    }
+                } else if (item.has("image_path")) {
+                    // Migração legada
+                    item.optString("image_path").takeIf { it.isNotBlank() }?.let { imagePathsList.add(it) }
+                }
+
+                val messagesList = mutableListOf<ChatMessage>()
+                if (item.has("messages")) {
+                    val msgArray = item.getJSONArray("messages")
+                    for (j in 0 until msgArray.length()) {
+                        val msgObj = msgArray.getJSONObject(j)
+                        messagesList.add(
+                            ChatMessage(
+                                text = msgObj.getString("text"),
+                                isUser = msgObj.getBoolean("is_user"),
+                                imagePath = if (msgObj.has("image_path")) msgObj.getString("image_path") else null,
+                                documentId = if (msgObj.has("document_id")) msgObj.getString("document_id") else null
+                            )
+                        )
+                    }
+                }
+
                 list.add(
                     DocumentState(
                         id = item.optString("id"),
                         extractedText = item.optString("extracted_text"),
                         gemmaDiagnosis = item.optString("gemma_diagnosis"),
                         status = item.optString("status", "PENDING"),
-                        imagePath = if (item.has("image_path")) item.optString("image_path") else null,
-                        context = item.optString("context", "")
+                        imagePaths = imagePathsList,
+                        context = item.optString("context", ""),
+                        messages = messagesList
                     )
                 )
             }
@@ -61,8 +90,19 @@ class DocumentStateManager(private val context: Context) {
                 put("extracted_text", d.extractedText)
                 put("gemma_diagnosis", d.gemmaDiagnosis)
                 put("status", d.status)
-                if (d.imagePath != null) put("image_path", d.imagePath)
+                put("image_paths", JSONArray(d.imagePaths))
                 put("context", d.context)
+                
+                val msgArray = JSONArray()
+                for (m in d.messages) {
+                    msgArray.put(JSONObject().apply {
+                        put("text", m.text)
+                        put("is_user", m.isUser)
+                        m.imagePath?.let { put("image_path", it) }
+                        m.documentId?.let { put("document_id", it) }
+                    })
+                }
+                put("messages", msgArray)
             }
             jsonArray.put(item)
         }
@@ -83,8 +123,8 @@ class DocumentStateManager(private val context: Context) {
         val docToDelete = currentDocs.find { it.id == docId }
         
         if (docToDelete != null) {
-            // Delete image file if exists
-            docToDelete.imagePath?.let { path ->
+            // Delete all image files
+            for (path in docToDelete.imagePaths) {
                 val file = File(path)
                 if (file.exists()) {
                     file.delete()
@@ -100,8 +140,19 @@ class DocumentStateManager(private val context: Context) {
                     put("extracted_text", d.extractedText)
                     put("gemma_diagnosis", d.gemmaDiagnosis)
                     put("status", d.status)
-                    if (d.imagePath != null) put("image_path", d.imagePath)
+                    put("image_paths", JSONArray(d.imagePaths))
                     put("context", d.context)
+
+                    val msgArray = JSONArray()
+                    for (m in d.messages) {
+                        msgArray.put(JSONObject().apply {
+                            put("text", m.text)
+                            put("is_user", m.isUser)
+                            m.imagePath?.let { put("image_path", it) }
+                            m.documentId?.let { put("document_id", it) }
+                        })
+                    }
+                    put("messages", msgArray)
                 }
                 jsonArray.put(item)
             }

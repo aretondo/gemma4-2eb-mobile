@@ -27,11 +27,11 @@ PROMPT_FILE = BASE_DIR / "prompts.json"
 SYNC_DIR.mkdir(exist_ok=True)
 IMAGES_DIR.mkdir(exist_ok=True)
 
-# Garante que prompts.json existe
+# Garante que prompts.json existe com prompts melhorados
 if not PROMPT_FILE.exists():
     PROMPT_FILE.write_text(json.dumps({
-        "chat_system_prompt": "",
-        "ocr_system_prompt": ""
+        "chat_system_prompt": "Você é a 'Gemma Scan Assistant'. Ajude o profissional a estruturar relatos clínicos e dados de OCR. Se o usuário fornecer um relato verbal/texto, extraia os pontos principais (estado geral, evolução, conduta). Se houver OCR, valide os dados técnicos. Quando as informações estiverem maduras, sugira o status [SET_STATUS:READY]. Seja técnica e objetiva.",
+        "ocr_system_prompt": "Você recebeu dados de OCR. Extraia os campos técnicos. Considere que o usuário pode enviar múltiplas páginas/fotos para o mesmo caso; combine as novas informações com o contexto anterior. Pergunte se falta algo ou se pode marcar como pronto para sincronia."
     }, ensure_ascii=False, indent=2))
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -51,11 +51,11 @@ app.add_middleware(
 # ── Modelos Pydantic ──────────────────────────────────────────────────────────
 class DocumentState(BaseModel):
     id: str | None = None
-    extractedText: str = ""
-    imagePath: str | None = None  # Mantido por retrocompatibilidade
-    images: list[str] = []        # Novo campo: Array de imagens em Base64
+    extracted_text: str = ""       # Nome do campo vindo do Android
+    gemma_diagnosis: str = ""      # Nome do campo vindo do Android
+    status: str = "PENDING"        # Nome do campo vindo do Android
     context: str = ""
-    syncStatus: str = "PENDING"
+    images: list[str] = []         # Array de imagens em Base64
     timestamp: str | None = None
     extra: dict[str, Any] = {}
 

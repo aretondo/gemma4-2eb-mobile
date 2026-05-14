@@ -5,38 +5,33 @@
 ## 🌟 Destaques
 
 - **100% Offline**: Processamento local via LiteRT (TensorFlow Lite).
-- **OCR Inteligente**: Digitalização de laudos e receitas com Google ML Kit.
+- **Visão Expandida**: Suporte a múltiplas fotos por documento para análise completa.
+- **Memória Persistente**: Histórico de chat preservado individualmente por sessão/documento.
+- **Relatos Flexíveis**: Suporta triagem baseada apenas em texto ou múltiplos anexos visuais.
 - **RAG Local**: Base de conhecimento embutida para protocolos de emergência.
-- **Ecossistema de Sincronização**: Backend em Python para consolidar dados coletados em campo.
+- **Ecossistema de Sincronização**: Backend em Python (FastAPI + Streamlit) para consolidar dados.
 
-## 🛠 Novidades Recentes
+## 🌟 Novidades Recentes
 
-1. **Cópia de Texto**: Toque longo em qualquer mensagem do chat para copiar o conteúdo.
-2. **Tela "See It"**: Edição estruturada de documentos para corrigir OCR ou análises da IA antes da sincronização.
-3. **Atalhos no Chat**: Botão "Visualizar Metadados" integrado às respostas do Gemma para acesso rápido à edição.
-4. **Local Sync Backend**: Servidor FastAPI + Streamlit para gerenciar documentos e prompts remotamente.
-5. **Sync Multi-Imagens**: O backend agora suporta o recebimento de múltiplas imagens por documento via Base64.
+1. **Sessões de Chat**: Cada documento agora mantém seu próprio histórico. Use "Use it" para retomar ou "New Chat" para começar do zero.
+2. **Múltiplas Imagens**: Anexe várias fotos a um caso clínico para triagem detalhada.
+3. **Tool Use Simulada**: O Gemma usa tags como `[SET_STATUS:READY]` para automatizar o status do prontuário via chat.
+4. **Backend Alinhado**: Sincronização otimizada com campos padronizados (`extracted_text`, `gemma_diagnosis`, `status`).
 
 ## 📲 Integração Android (Multi-Imagens)
 
-Para enviar as imagens do APK para o backend, use o campo `images` (array de strings Base64) no JSON de sincronização:
+Para sincronizar, o APK envia um JSON contendo o array de imagens em Base64:
 
 ```kotlin
-// Exemplo de payload JSON no Android
 val payload = JSONObject().apply {
     put("id", doc.id)
-    put("extractedText", doc.extractedText)
-    put("syncStatus", "READY")
-    // Array de imagens convertidas para Base64
+    put("extracted_text", doc.extractedText)
+    put("gemma_diagnosis", doc.gemmaResponse)
+    put("status", "READY")
     put("images", JSONArray(listOf(base64Image1, base64Image2))) 
 }
-
-// Chamada via OkHttp
-val request = Request.Builder()
-    .url("http://<IP_DO_PC>:8000/sync")
-    .post(payload.toString().toRequestBody("application/json".toMediaType()))
-    .build()
 ```
+
 
 
 - `/app`: Código-fonte da aplicação Android (Kotlin + Jetpack Compose).

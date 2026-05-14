@@ -60,6 +60,21 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun startNewChat() {
+        currentDocumentId = null
+        _messages.value = emptyList()
+        _state.value = ChatState.Idle
+    }
+
+    private fun updateCurrentDocumentMessages() {
+        currentDocumentId?.let { docId ->
+            val doc = documentManager.getDocuments().find { it.id == docId }
+            if (doc != null) {
+                documentManager.saveDocument(doc.copy(messages = _messages.value))
+            }
+        }
+    }
+
     fun refreshDocuments() {
         _documents.value = documentManager.getDocuments()
     }
@@ -132,6 +147,20 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         currentMessages.add(ChatMessage(text, true))
         _messages.value = currentMessages
 
+        // Se não houver documento vinculado, cria um agora para salvar o relato manual
+        if (currentDocumentId == null) {
+            val newDocId = "doc_${System.currentTimeMillis()}"
+            val newDoc = DocumentState(
+                id = newDocId,
+                extractedText = "", // Texto OCR vazio pois é um relato manual
+                context = "Relato inicial: $text"
+            )
+            documentManager.saveDocument(newDoc)
+            currentDocumentId = newDocId
+            refreshDocuments()
+        }
+
+        updateCurrentDocumentMessages()
         _state.value = ChatState.Generating
 
         val ragContext = localKnowledgeManager.searchContext(text)
@@ -181,6 +210,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             }
                         }
                         _messages.value = updatedMessages
+                        updateCurrentDocumentMessages()
                     }
                 }
 
@@ -223,19 +253,40 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onDocumentScanned(extractedText: String, imagePath: String? = null) {
         android.util.Log.d("ChatViewModel", "onDocumentScanned called. Text: '${extractedText.take(20)}...', Image: $imagePath")
-        val docId = "doc_${System.currentTimeMillis()}"
-        val newDoc = DocumentState(id = docId, extractedText = extractedText, imagePath = imagePath)
-        documentManager.saveDocument(newDoc)
+        
+        val docId: String
+        val isExistingDoc = currentDocumentId != null
+        
+        if (isExistingDoc) {
+            docId = currentDocumentId!!
+            val doc = documentManager.getDocuments().find { it.id == docId }
+            if (doc != null) {
+                val newPaths = doc.imagePaths.toMutableList()
+                imagePath?.let { newPaths.add(it) }
+                val newText = if (doc.extractedText.isBlank()) extractedText else doc.extractedText + "\n" + extractedText
+                documentManager.saveDocument(doc.copy(imagePaths = newPaths, extractedText = newText))
+            }
+        } else {
+            docId = "doc_${System.currentTimeMillis()}"
+            val newDoc = DocumentState(
+                id = docId, 
+                extractedText = extractedText, 
+                imagePaths = if (imagePath != null) listOf(imagePath) else emptyList()
+            )
+            documentManager.saveDocument(newDoc)
+            currentDocumentId = docId
+        }
+        
         refreshDocuments()
 
-        currentDocumentId = docId
-
         val statusText = if (extractedText.isNotBlank()) "Metadados extraídos" else "Imagem capturada (sem texto detectado)"
-        val textToUser = "📄 Documento Digitalizado (ID: $docId)\n[$statusText e enviado ao Gemma]"
+        val prefix = if (isExistingDoc) "➕ Nova Imagem no Doc" else "📄 Documento Digitalizado"
+        val textToUser = "$prefix (ID: $docId)\n[$statusText e enviado ao Gemma]"
         
         val currentMessages = _messages.value.toMutableList()
         currentMessages.add(ChatMessage(textToUser, true, imagePath = imagePath, documentId = docId))
         _messages.value = currentMessages
+        updateCurrentDocumentMessages()
 
         _state.value = ChatState.Generating
 
@@ -268,12 +319,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     }
                     _messages.value = updatedMessages
+                    updateCurrentDocumentMessages()
                 }
 
                 val doc = documentManager.getDocuments().find { it.id == docId }
                 if (doc != null) {
-                    val newContext = "Gemma: $fullResponse"
-                    documentManager.saveDocument(doc.copy(context = newContext))
+                    val newContext = if (doc.context.isBlank()) "Gemma: $fullResponse" else doc.context + "\nGemma: $fullResponse"
+                    documentManager.saveDocument(doc.copy(context = newContext, messages = _messages.value))
                     refreshDocuments()
                 }
 
@@ -290,13 +342,16 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     fun useDocument(docId: String) {
         val doc = documentManager.getDocuments().find { it.id == docId } ?: return
         currentDocumentId = docId
+        _messages.value = doc.messages
         
-        val systemMessage = "Usando contexto do Documento ID: $docId"
-        val currentMessages = _messages.value.toMutableList()
-        currentMessages.add(ChatMessage(systemMessage, true, imagePath = doc.imagePath, documentId = docId))
-        _messages.value = currentMessages
-
-        sendMessage("Quero revisar o documento $docId. O que falta para enviarmos para o sync?")
+        if (_messages.value.isEmpty()) {
+            val systemMessage = "Usando contexto do Documento ID: $docId"
+            val currentMessages = mutableListOf<ChatMessage>()
+            currentMessages.add(ChatMessage(systemMessage, true, imagePath = doc.imagePaths.firstOrNull(), documentId = docId))
+            _messages.value = currentMessages
+            updateCurrentDocumentMessages()
+            sendMessage("Quero revisar o documento $docId. O que falta para enviarmos para o sync?")
+        }
     }
 
     fun deleteDocument(docId: String) {
