@@ -38,7 +38,7 @@ When a document is scanned:
 ### 5. Premium Material 3 Interface
 - **Modern Navigation**: Fixed `TopAppBar` and a `ModalNavigationDrawer` for seamless switching between Chat and the Files history.
 - **Responsive Layout**: A clean, adaptive chat interface that feels alive with auto-scrolling and real-time generation feedback.
-- **Files Management**: A dedicated "Files" screen to filter and manage pending or completed document reviews.
+- **Files Management**: A dedicada tela de "Arquivos" agora suporta a exclusão de documentos com atualização reativa da lista via `StateFlow`.
 
 ## 🧪 Future Improvements
 - Full-screen OCR preview with highlighted text areas.

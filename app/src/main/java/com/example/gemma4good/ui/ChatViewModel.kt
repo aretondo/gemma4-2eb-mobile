@@ -36,6 +36,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages: StateFlow<List<ChatMessage>> = _messages
 
+    private val _documents = MutableStateFlow<List<DocumentState>>(emptyList())
+    val documents: StateFlow<List<DocumentState>> = _documents
+
     var currentDocumentId: String? = null
 
     fun getDocumentManager() = documentManager
@@ -43,6 +46,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     init {
         loadRecentMemory()
         checkModelState()
+        refreshDocuments()
+    }
+
+    fun refreshDocuments() {
+        _documents.value = documentManager.getDocuments()
     }
 
     private fun checkModelState() {
@@ -172,6 +180,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val docId = "doc_${System.currentTimeMillis()}"
         val newDoc = DocumentState(id = docId, extractedText = extractedText, imagePath = imagePath)
         documentManager.saveDocument(newDoc)
+        refreshDocuments()
 
         currentDocumentId = docId
 
@@ -219,6 +228,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 if (doc != null) {
                     val newContext = "Gemma: $fullResponse"
                     documentManager.saveDocument(doc.copy(context = newContext))
+                    refreshDocuments()
                 }
 
                 saveRecentMemory()
@@ -245,6 +255,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteDocument(docId: String) {
         documentManager.deleteDocument(docId)
+        refreshDocuments()
         if (currentDocumentId == docId) {
             currentDocumentId = null
         }

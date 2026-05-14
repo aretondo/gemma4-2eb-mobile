@@ -157,7 +157,7 @@ fun MainScreen(viewModel: ChatViewModel) {
 
 @Composable
 fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit) {
-    val documents = viewModel.getDocumentManager().getDocuments()
+    val documents by viewModel.documents.collectAsState()
     
     LazyColumn(
         modifier = Modifier.fillMaxSize().padding(16.dp)
