@@ -1,45 +1,51 @@
 package com.example.gemma4good
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.*
 import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import androidx.core.content.FileProvider
+import com.example.gemma4good.data.ChatMessage
 import com.example.gemma4good.ui.ChatState
 import com.example.gemma4good.ui.ChatViewModel
 import com.example.gemma4good.ui.theme.Gemma4GoodTheme
-import android.Manifest
-import android.content.Intent
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
-import android.graphics.Bitmap
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import android.net.Uri
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +53,77 @@ class MainActivity : ComponentActivity() {
         setContent {
             Gemma4GoodTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    MainScreen()
+                    AppNavigation()
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    var currentScreen by remember { mutableStateOf("Chat") }
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "Gemma4Good",
+                    modifier = Modifier.padding(16.dp),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Divider()
+                NavigationDrawerItem(
+                    label = { Text("Chat") },
+                    selected = currentScreen == "Chat",
+                    onClick = {
+                        currentScreen = "Chat"
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Chat, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Arquivos") },
+                    selected = currentScreen == "Files",
+                    onClick = {
+                        currentScreen = "Files"
+                        scope.launch { drawerState.close() }
+                    },
+                    icon = { Icon(Icons.Default.Folder, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+            }
+        }
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("gemma4good") },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                )
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                when (currentScreen) {
+                    "Chat" -> MainScreen(viewModel)
+                    "Files" -> FilesScreen(viewModel) {
+                        currentScreen = "Chat"
+                    }
                 }
             }
         }
@@ -55,28 +131,109 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(viewModel: ChatViewModel = viewModel()) {
+fun MainScreen(viewModel: ChatViewModel) {
     val state by viewModel.state.collectAsState()
     val messages by viewModel.messages.collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF1A237E), Color(0xFF000000))
-                )
-            )
+            .padding(top = 8.dp)
     ) {
-        // Header de Impacto
-        HeaderSection()
-
         when (state) {
             is ChatState.ModelMissing -> DownloadScreen(onDownload = { viewModel.startDownload() })
             is ChatState.Downloading -> LoadingScreen("Baixando modelo Gemma 4 E2B do Hugging Face...\nVerifique suas notificações.")
             is ChatState.LoadingModel -> LoadingScreen("Inicializando o motor Gemma 4...")
             is ChatState.Error -> ErrorScreen((state as ChatState.Error).message) { viewModel.startDownload() }
-            else -> ChatScreen(messages, state is ChatState.Generating, { viewModel.sendMessage(it) }, { viewModel.onDocumentScanned(it) })
+            else -> ChatScreen(
+                messages = messages,
+                isGenerating = state is ChatState.Generating,
+                onSend = { viewModel.sendMessage(it) },
+                onDocumentScanned = { text, path -> viewModel.onDocumentScanned(text, path) }
+            )
+        }
+    }
+}
+
+@Composable
+fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit) {
+    val documents = viewModel.getDocumentManager().getDocuments()
+    
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(16.dp)
+    ) {
+        item {
+            Text("Meus Documentos", style = MaterialTheme.typography.headlineMedium, modifier = Modifier.padding(bottom = 16.dp))
+        }
+        
+        if (documents.isEmpty()) {
+            item {
+                Text("Nenhum documento encontrado.")
+            }
+        } else {
+            items(documents) { doc ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (doc.imagePath != null) {
+                            AsyncImage(
+                                model = File(doc.imagePath),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color.LightGray),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.InsertDriveFile, contentDescription = null, tint = Color.White)
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "ID: ${doc.id}", fontWeight = FontWeight.Bold, maxLines = 1)
+                            Text(text = "Status: ${doc.status}", color = if (doc.status == "PENDING") Color.Red else Color.Green)
+                            Text(
+                                text = doc.extractedText,
+                                maxLines = 2,
+                                color = Color.Gray,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        IconButton(onClick = {
+                            viewModel.deleteDocument(doc.id)
+                        }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Excluir", tint = Color.Red)
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        Button(onClick = {
+                            viewModel.useDocument(doc.id)
+                            onUseDocument()
+                        }) {
+                            Text("Use it")
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -92,34 +249,11 @@ fun ErrorScreen(message: String, onRetry: () -> Unit) {
     ) {
         Icon(Icons.Default.Info, contentDescription = null, tint = Color.Red, modifier = Modifier.size(64.dp))
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = message, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text(text = message, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry) {
             Text("TENTAR NOVAMENTE")
         }
-    }
-}
-
-@Composable
-fun HeaderSection() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Gemma 4 Good",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
-        Text(
-            text = "Impacto Social com Gemma 4",
-            fontSize = 14.sp,
-            color = Color.LightGray
-        )
-        Divider(modifier = Modifier.padding(top = 16.dp), color = Color.Gray.copy(alpha = 0.3f))
     }
 }
 
@@ -136,25 +270,23 @@ fun DownloadScreen(onDownload: () -> Unit) {
             imageVector = Icons.Default.Info,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = Color(0xFF4FC3F7)
+            tint = MaterialTheme.colorScheme.primary
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "O cérebro está offline",
             fontSize = 22.sp,
-            color = Color.White,
             fontWeight = FontWeight.SemiBold
         )
         Text(
             text = "Para rodar sem internet, precisamos baixar o modelo Gemma 4 Effective 2B (aprox. 2.6GB). Recomendamos usar Wi-Fi.",
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            color = Color.LightGray,
+            color = Color.Gray,
             modifier = Modifier.padding(vertical = 16.dp)
         )
         Button(
             onClick = onDownload,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2979FF)),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text("BAIXAR GEMMA 4", fontWeight = FontWeight.Bold)
@@ -169,14 +301,19 @@ fun LoadingScreen(message: String) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(color = Color(0xFF2979FF))
+        CircularProgressIndicator()
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = message, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text(text = message, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 
 @Composable
-fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onSend: (String) -> Unit, onDocumentScanned: (String) -> Unit) {
+fun ChatScreen(
+    messages: List<ChatMessage>,
+    isGenerating: Boolean,
+    onSend: (String) -> Unit,
+    onDocumentScanned: (String, String?) -> Unit
+) {
     var text by remember { mutableStateOf("") }
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
     val context = LocalContext.current
@@ -184,21 +321,47 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
 
     val speechRecognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
     val textRecognizer = remember { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
+
+    // Uri para salvar a foto em alta resolução
+    val capturedImageUri = remember {
+        val file = File(context.cacheDir, "temp_scan.jpg")
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
     
     val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicturePreview()
-    ) { bitmap: Bitmap? ->
-        if (bitmap != null) {
-            val image = InputImage.fromBitmap(bitmap, 0)
-            textRecognizer.process(image)
-                .addOnSuccessListener { visionText ->
-                    if (visionText.text.isNotBlank()) {
-                        onDocumentScanned(visionText.text)
-                    }
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success) {
+            val file = File(context.cacheDir, "temp_scan.jpg")
+            if (file.exists()) {
+                val originalBitmap = BitmapFactory.decodeFile(file.absolutePath)
+                if (originalBitmap != null) {
+                    val bitmap = enhanceContrast(originalBitmap)
+                    val image = InputImage.fromBitmap(bitmap, 0)
+                    textRecognizer.process(image)
+                        .addOnSuccessListener { visionText ->
+                            val extractedText = visionText.text
+                            val finalFile = File(context.cacheDir, "scan_${System.currentTimeMillis()}.jpg")
+                            try {
+                                FileOutputStream(finalFile).use { out ->
+                                    originalBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                }
+                                onDocumentScanned(extractedText, finalFile.absolutePath)
+                            } catch (e: Exception) {
+                                onDocumentScanned(extractedText, null)
+                            }
+                        }
+                        .addOnFailureListener { e ->
+                            val finalFile = File(context.cacheDir, "scan_${System.currentTimeMillis()}.jpg")
+                            try {
+                                FileOutputStream(finalFile).use { out ->
+                                    originalBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                                }
+                                onDocumentScanned("", finalFile.absolutePath)
+                            } catch (ex: Exception) {}
+                        }
                 }
-                .addOnFailureListener { e ->
-                    android.util.Log.e("OCR", "Text recognition failed", e)
-                }
+            }
         }
     }
     
@@ -216,8 +379,7 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
         }
     }
 
-    // Auto-scroll para o fim quando o conteúdo da última mensagem muda (streaming)
-    LaunchedEffect(messages.size, if (messages.isNotEmpty()) messages.last().first.length else 0) {
+    LaunchedEffect(messages.size, if (messages.isNotEmpty()) messages.last().text.length else 0) {
         if (messages.isNotEmpty()) {
             listState.scrollToItem(messages.size - 1)
         }
@@ -232,7 +394,7 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
             reverseLayout = false
         ) {
             items(messages) { message ->
-                ChatBubble(message.first, message.second)
+                ChatBubble(message)
             }
             if (isGenerating) {
                 item {
@@ -247,28 +409,23 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextField(
+            OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Como posso ajudar hoje?") },
-                shape = RoundedCornerShape(24.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                )
+                shape = RoundedCornerShape(24.dp)
             )
+            Spacer(modifier = Modifier.width(8.dp))
             if (text.isBlank()) {
                 IconButton(
-                    onClick = { cameraLauncher.launch(null) },
-                    enabled = !isGenerating
+                    onClick = { cameraLauncher.launch(capturedImageUri) },
+                    enabled = !isGenerating,
+                    modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(24.dp))
                 ) {
-                    Icon(
-                        Icons.Default.CameraAlt,
-                        contentDescription = "Digitalizar Documento",
-                        tint = Color(0xFF2979FF)
-                    )
+                    Icon(Icons.Default.CameraAlt, contentDescription = "Digitalizar")
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
                     onClick = {
                         val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
@@ -283,13 +440,13 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
                             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                         }
                     },
-                    enabled = !isGenerating
-                ) {
-                    Icon(
-                        Icons.Default.Mic, 
-                        contentDescription = "Falar", 
-                        tint = if (isListening) Color.Red else Color(0xFF2979FF)
+                    enabled = !isGenerating,
+                    modifier = Modifier.background(
+                        if (isListening) Color.Red.copy(alpha = 0.2f) else MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(24.dp)
                     )
+                ) {
+                    Icon(Icons.Default.Mic, contentDescription = "Falar", tint = if (isListening) Color.Red else MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             } else {
                 IconButton(
@@ -297,10 +454,50 @@ fun ChatScreen(messages: List<Pair<String, Boolean>>, isGenerating: Boolean, onS
                         onSend(text)
                         text = ""
                     },
-                    enabled = !isGenerating && text.isNotBlank()
+                    enabled = !isGenerating && text.isNotBlank(),
+                    modifier = Modifier.background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(24.dp))
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = "Enviar", tint = Color(0xFF2979FF))
+                    Icon(Icons.Default.Send, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.onPrimary)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun ChatBubble(message: ChatMessage) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        contentAlignment = if (message.isUser) Alignment.CenterEnd else Alignment.CenterStart
+    ) {
+        Surface(
+            color = if (message.isUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = if (message.isUser) 16.dp else 0.dp,
+                bottomEnd = if (message.isUser) 0.dp else 16.dp
+            )
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                if (message.imagePath != null) {
+                    AsyncImage(
+                        model = File(message.imagePath),
+                        contentDescription = "Document Thumbnail",
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(150.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .padding(bottom = 8.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                Text(
+                    text = message.text,
+                    color = if (message.isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
@@ -337,28 +534,22 @@ private fun startListening(
     speechRecognizer.startListening(intent)
 }
 
-@Composable
-fun ChatBubble(text: String, isUser: Boolean) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        contentAlignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
-    ) {
-        Surface(
-            color = if (isUser) Color(0xFF2979FF) else Color(0xFF333333),
-            shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (isUser) 16.dp else 0.dp,
-                bottomEnd = if (isUser) 0.dp else 16.dp
-            )
-        ) {
-            Text(
-                text = text,
-                modifier = Modifier.padding(12.dp),
-                color = Color.White
-            )
-        }
-    }
+fun enhanceContrast(src: Bitmap): Bitmap {
+    val width = src.width
+    val height = src.height
+    val dest = Bitmap.createBitmap(width, height, src.config)
+    val canvas = Canvas(dest)
+    val paint = Paint()
+    val cm = ColorMatrix(floatArrayOf(
+        2f, 0f, 0f, 0f, -100f,
+        0f, 2f, 0f, 0f, -100f,
+        0f, 0f, 2f, 0f, -100f,
+        0f, 0f, 0f, 1f, 0f
+    ))
+    val grayMatrix = ColorMatrix()
+    grayMatrix.setSaturation(0f)
+    cm.postConcat(grayMatrix)
+    paint.colorFilter = ColorMatrixColorFilter(cm)
+    canvas.drawBitmap(src, 0f, 0f, paint)
+    return dest
 }

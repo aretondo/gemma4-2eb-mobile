@@ -3,6 +3,8 @@ package com.example.gemma4good.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gemma4good.data.ChatMessage
+import com.example.gemma4good.data.DocumentState
 import com.example.gemma4good.data.GemmaInferenceManager
 import com.example.gemma4good.data.ModelDownloader
 import kotlinx.coroutines.Dispatchers
@@ -31,8 +33,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow<ChatState>(ChatState.LoadingModel)
     val state: StateFlow<ChatState> = _state
 
-    private val _messages = MutableStateFlow<List<Pair<String, Boolean>>>(emptyList())
-    val messages: StateFlow<List<Pair<String, Boolean>>> = _messages
+    private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val messages: StateFlow<List<ChatMessage>> = _messages
+
+    var currentDocumentId: String? = null
+
+    fun getDocumentManager() = documentManager
 
     init {
         loadRecentMemory()
@@ -81,10 +87,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                             _state.value = ChatState.Error("Download falhou (Erro $reason). Verifique se tem acesso ao modelo no Hugging Face.")
                         }
                     }
-                    // Adicionando tratamento para quando o ID não é encontrado ou cursor vazio
-                    -1 -> {
-                         // Se demorar muito a aparecer, pode ter falhado silenciosamente
-                    }
+                    -1 -> { }
                 }
                 if (downloading) delay(3000)
             }
@@ -107,34 +110,55 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         if (text.isBlank()) return
 
         val currentMessages = _messages.value.toMutableList()
-        currentMessages.add(Pair(text, true)) // User message
+        currentMessages.add(ChatMessage(text, true))
         _messages.value = currentMessages
 
         _state.value = ChatState.Generating
 
         val ragContext = localKnowledgeManager.searchContext(text)
-        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é o Gemma Responder, um assistente de emergências e sobrevivência offline. Seja extremamente direto, curto e focado em salvar vidas. Nunca invente procedimentos médicos perigosos. Responda apenas sobre a dúvida a seguir."
+        var docContext = ""
+
+        currentDocumentId?.let { docId ->
+            val doc = documentManager.getDocuments().find { it.id == docId }
+            if (doc != null && doc.context.isNotBlank()) {
+                docContext = "\n\nCONTEXTO DO DOCUMENTO ATUAL:\n" + doc.context
+            }
+        }
+
+        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant', uma ferramenta especializada para profissionais de saúde e pesquisadores. Seu papel é auxiliar na organização, digitalização e análise técnica de dados médicos. Seja extremamente técnica, objetiva e direta. Não dê conselhos médicos, não dê lições de moral e não sugira encaminhamentos a pacientes. Foque na extração de dados e síntese técnica das informações fornecidas. Você também pode informar ao usuário que ele pode excluir documentos pendentes na aba de Arquivos se necessário."
         
-        val finalPrompt = if (ragContext.isNotEmpty()) {
-            "$systemPrompt\n\n$ragContext\n\nPERGUNTA DO USUÁRIO: $text"
+        val finalPrompt = if (ragContext.isNotEmpty() || docContext.isNotEmpty()) {
+            "$systemPrompt\n\n[CONTEXTO RELEVANTE]:\n$ragContext$docContext\n\n[DADOS/PERGUNTA DO PROFISSIONAL]: $text"
         } else {
-            "$systemPrompt\n\nPERGUNTA DO USUÁRIO: $text"
+            "$systemPrompt\n\n[DADOS/PERGUNTA DO PROFISSIONAL]: $text"
         }
 
         viewModelScope.launch {
             try {
                 var firstToken = true
+                var fullResponse = ""
                 inferenceManager.generateResponse(finalPrompt).collect { token ->
+                    fullResponse += token
                     val updatedMessages = _messages.value.toMutableList()
                     if (firstToken) {
-                        updatedMessages.add(Pair(token, false))
+                        updatedMessages.add(ChatMessage(token, false))
                         firstToken = false
                     } else {
                         val lastMsg = updatedMessages.last()
-                        updatedMessages[updatedMessages.size - 1] = Pair(lastMsg.first + token, false)
+                        updatedMessages[updatedMessages.size - 1] = lastMsg.copy(text = lastMsg.text + token)
                     }
                     _messages.value = updatedMessages
                 }
+
+                currentDocumentId?.let { docId ->
+                    val docs = documentManager.getDocuments()
+                    val doc = docs.find { it.id == docId }
+                    if (doc != null) {
+                        val newContext = doc.context + "\nUser: $text\nGemma: $fullResponse"
+                        documentManager.saveDocument(doc.copy(context = newContext))
+                    }
+                }
+
                 saveRecentMemory()
                 _state.value = ChatState.Idle
             } catch (e: Exception) {
@@ -143,41 +167,86 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun onDocumentScanned(extractedText: String) {
-        android.util.Log.d("OCR_TEXT", "Texto extraído: $extractedText")
+    fun onDocumentScanned(extractedText: String, imagePath: String? = null) {
+        android.util.Log.d("ChatViewModel", "onDocumentScanned called. Text: '${extractedText.take(20)}...', Image: $imagePath")
         val docId = "doc_${System.currentTimeMillis()}"
-        val newDoc = com.example.gemma4good.data.DocumentState(id = docId, extractedText = extractedText)
+        val newDoc = DocumentState(id = docId, extractedText = extractedText, imagePath = imagePath)
         documentManager.saveDocument(newDoc)
 
-        val textToUser = "📄 Documento Digitalizado (ID: $docId)\n[Metadados extraídos e enviados ao Gemma]"
+        currentDocumentId = docId
+
+        val statusText = if (extractedText.isNotBlank()) "Metadados extraídos" else "Imagem capturada (sem texto detectado)"
+        val textToUser = "📄 Documento Digitalizado (ID: $docId)\n[$statusText e enviado ao Gemma]"
+        
         val currentMessages = _messages.value.toMutableList()
-        currentMessages.add(Pair(textToUser, true))
+        currentMessages.add(ChatMessage(textToUser, true, imagePath = imagePath, documentId = docId))
         _messages.value = currentMessages
 
         _state.value = ChatState.Generating
 
-        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é o Gemma Responder. O usuário acaba de enviar um documento extraído via OCR. Analise sucintamente o texto, identifique do que se trata (ex: laudo dermatológico, receita), pergunte se há complementos e confirme se podemos marcar como PRONTO PARA SINCRONIZAR."
-        val finalPrompt = "$systemPrompt\n\nTEXTO DO DOCUMENTO:\n$extractedText"
+        val systemPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant'. O profissional enviou um documento médico via OCR. Sua tarefa é: 1. Identificar tecnicamente o tipo de documento. 2. Extrair dados estruturados (valores de exames, nomes de medicamentos, datas). 3. Perguntar se há dados adicionais para completar a ficha. Seja técnica e não emita opiniões clínicas ou recomendações de saúde. Se o texto estiver vazio, informe que a captura falhou."
+        val finalPrompt = if (extractedText.isNotBlank()) {
+            "$systemPrompt\n\n[TEXTO BRUTO DO OCR]:\n$extractedText"
+        } else {
+            "$systemPrompt\n\n[ALERTA: O OCR não detectou texto nesta imagem]"
+        }
 
         viewModelScope.launch {
             try {
+                android.util.Log.d("ChatViewModel", "Starting AI response for document")
                 var firstToken = true
+                var fullResponse = ""
                 inferenceManager.generateResponse(finalPrompt).collect { token ->
+                    fullResponse += token
                     val updatedMessages = _messages.value.toMutableList()
                     if (firstToken) {
-                        updatedMessages.add(Pair(token, false))
+                        updatedMessages.add(ChatMessage(token, false))
                         firstToken = false
                     } else {
-                        val lastMsg = updatedMessages.last()
-                        updatedMessages[updatedMessages.size - 1] = Pair(lastMsg.first + token, false)
+                        if (updatedMessages.isNotEmpty()) {
+                            val lastMsg = updatedMessages.last()
+                            if (!lastMsg.isUser) {
+                                updatedMessages[updatedMessages.size - 1] = lastMsg.copy(text = lastMsg.text + token)
+                            } else {
+                                updatedMessages.add(ChatMessage(token, false))
+                            }
+                        }
                     }
                     _messages.value = updatedMessages
                 }
+
+                val doc = documentManager.getDocuments().find { it.id == docId }
+                if (doc != null) {
+                    val newContext = "Gemma: $fullResponse"
+                    documentManager.saveDocument(doc.copy(context = newContext))
+                }
+
                 saveRecentMemory()
                 _state.value = ChatState.Idle
+                android.util.Log.d("ChatViewModel", "AI response finished for document")
             } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Error in document AI response", e)
                 _state.value = ChatState.Error(e.localizedMessage ?: "Erro desconhecido")
             }
+        }
+    }
+
+    fun useDocument(docId: String) {
+        val doc = documentManager.getDocuments().find { it.id == docId } ?: return
+        currentDocumentId = docId
+        
+        val systemMessage = "Usando contexto do Documento ID: $docId"
+        val currentMessages = _messages.value.toMutableList()
+        currentMessages.add(ChatMessage(systemMessage, true, imagePath = doc.imagePath, documentId = docId))
+        _messages.value = currentMessages
+
+        sendMessage("Quero revisar o documento $docId. O que falta para enviarmos para o sync?")
+    }
+
+    fun deleteDocument(docId: String) {
+        documentManager.deleteDocument(docId)
+        if (currentDocumentId == docId) {
+            currentDocumentId = null
         }
     }
 
@@ -185,11 +254,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val memoryFile = java.io.File(getApplication<Application>().getExternalFilesDir(null), "recent_memory.json")
         try {
             val jsonArray = org.json.JSONArray()
-            // Salva as últimas 20 mensagens para manter contexto recente
             for (msg in _messages.value.takeLast(20)) { 
                 val item = org.json.JSONObject()
-                item.put("text", msg.first)
-                item.put("isUser", msg.second)
+                item.put("text", msg.text)
+                item.put("isUser", msg.isUser)
+                msg.imagePath?.let { item.put("imagePath", it) }
+                msg.documentId?.let { item.put("documentId", it) }
                 jsonArray.put(item)
             }
             memoryFile.writeText(jsonArray.toString(2))
@@ -204,10 +274,17 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val jsonString = memoryFile.readText()
                 val jsonArray = org.json.JSONArray(jsonString)
-                val loadedMessages = mutableListOf<Pair<String, Boolean>>()
+                val loadedMessages = mutableListOf<ChatMessage>()
                 for (i in 0 until jsonArray.length()) {
                     val item = jsonArray.getJSONObject(i)
-                    loadedMessages.add(Pair(item.getString("text"), item.getBoolean("isUser")))
+                    loadedMessages.add(
+                        ChatMessage(
+                            text = item.getString("text"),
+                            isUser = item.getBoolean("isUser"),
+                            imagePath = if (item.has("imagePath")) item.getString("imagePath") else null,
+                            documentId = if (item.has("documentId")) item.getString("documentId") else null
+                        )
+                    )
                 }
                 _messages.value = loadedMessages
             } catch (e: Exception) {

@@ -9,7 +9,9 @@ data class DocumentState(
     val id: String,
     val extractedText: String,
     var gemmaDiagnosis: String = "",
-    var status: String = "PENDING"
+    var status: String = "PENDING",
+    val imagePath: String? = null,
+    var context: String = ""
 )
 
 class DocumentStateManager(private val context: Context) {
@@ -31,7 +33,9 @@ class DocumentStateManager(private val context: Context) {
                         id = item.optString("id"),
                         extractedText = item.optString("extracted_text"),
                         gemmaDiagnosis = item.optString("gemma_diagnosis"),
-                        status = item.optString("status", "PENDING")
+                        status = item.optString("status", "PENDING"),
+                        imagePath = if (item.has("image_path")) item.optString("image_path") else null,
+                        context = item.optString("context", "")
                     )
                 )
             }
@@ -57,6 +61,8 @@ class DocumentStateManager(private val context: Context) {
                 put("extracted_text", d.extractedText)
                 put("gemma_diagnosis", d.gemmaDiagnosis)
                 put("status", d.status)
+                if (d.imagePath != null) put("image_path", d.imagePath)
+                put("context", d.context)
             }
             jsonArray.put(item)
         }
@@ -69,6 +75,46 @@ class DocumentStateManager(private val context: Context) {
             batchFile.writeText(finalObject.toString(2))
         } catch (e: Exception) {
             android.util.Log.e("DocumentStateManager", "Error writing batch", e)
+        }
+    }
+
+    fun deleteDocument(docId: String) {
+        val currentDocs = getDocuments().toMutableList()
+        val docToDelete = currentDocs.find { it.id == docId }
+        
+        if (docToDelete != null) {
+            // Delete image file if exists
+            docToDelete.imagePath?.let { path ->
+                val file = File(path)
+                if (file.exists()) {
+                    file.delete()
+                }
+            }
+            
+            currentDocs.remove(docToDelete)
+            
+            val jsonArray = JSONArray()
+            for (d in currentDocs) {
+                val item = JSONObject().apply {
+                    put("id", d.id)
+                    put("extracted_text", d.extractedText)
+                    put("gemma_diagnosis", d.gemmaDiagnosis)
+                    put("status", d.status)
+                    if (d.imagePath != null) put("image_path", d.imagePath)
+                    put("context", d.context)
+                }
+                jsonArray.put(item)
+            }
+            
+            val finalObject = JSONObject().apply {
+                put("documents", jsonArray)
+            }
+            
+            try {
+                batchFile.writeText(finalObject.toString(2))
+            } catch (e: Exception) {
+                android.util.Log.e("DocumentStateManager", "Error writing batch after delete", e)
+            }
         }
     }
 }

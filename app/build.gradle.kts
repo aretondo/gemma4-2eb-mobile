@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.litertlm.android)
     implementation(libs.mlkit.text.recognition)
+    implementation(libs.coil.compose)
     
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
