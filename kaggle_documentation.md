@@ -21,8 +21,13 @@ This project aims to leverage **Gemma 4** (Effective 2B) to provide a robust, of
 ### 1. Offline Model Deployment
 We implemented a `ModelDownloader` that fetches the Gemma 2B model directly from Hugging Face. Once downloaded, the model runs entirely offline using the LiteRT SDK, ensuring data privacy and reliability in remote areas.
 
-### 2. Local Knowledge Base (RAG-lite)
-To improve survival guidance, we integrated a `LocalKnowledgeManager` that acts as a local reference. It matches user queries against a pre-defined JSON knowledge base (e.g., first aid protocols) and injects relevant context into the Gemma prompt.
+### 2. Local Knowledge Base (RAG) & Dynamic Sync
+To provide accurate clinical and survival guidance, we implemented a full RAG (Retrieval-Augmented Generation) pipeline:
+- **Backend Knowledge Manager**: A new dashboard in the Streamlit backend allows uploading `.txt` and `.md` protocols. These are automatically chunked and indexed into a `knowledge_base.json`.
+- **Automatic Sync**: Upon clicking "Sync" in the Android app, it automatically fetches the latest knowledge base from the `GET /knowledge` endpoint.
+- **Offline Relevance Search**: We implemented a high-speed `KnowledgeManager` in Kotlin that performs keyword-based relevance scoring entirely offline.
+- **Context Injection**: Relevant chunks are injected into the Gemma prompt, enabling the model to answer specific questions (e.g., "how to treat a snake bite") using verified local protocols.
+
 
 ### 3. Advanced OCR Pipeline (V2) & Multi-Image Support
 The app features a sophisticated document scanning system:
@@ -36,10 +41,12 @@ The app features a sophisticated document scanning system:
 - **Text-Only Reports**: Full support for clinical triage based on manual descriptions even without accompanying images.
 - **Gemma Tool Use (Simulated)**: The model can emit `[SET_STATUS:READY]` tags to automate status updates based on natural language confirmation.
 
-### 5. Local Backend & Sync (v1.1)
-The backend has been optimized for field consistency and performance:
+### 5. Local Backend & Sync (v1.2)
+The backend now serves as a central knowledge hub:
+- **FastAPI /knowledge Endpoint**: Serves the processed knowledge base to the mobile clients.
+- **Streamlit Knowledge UI**: Provides a user-friendly interface for building and indexing the local library.
+- **Base64 Multi-Image Upload**: Enhanced synchronization for complex medical cases with multiple attachments.
 - **Aligned Data Model**: `DocumentState` now uses standardized field names (`extracted_text`, `gemma_diagnosis`, `status`) to match the Android client perfectly.
-- **Base64 Multi-Image Upload**: The `SyncManager` serializes all attached images into a Base64 `JSONArray`. The backend decodes them, saves them as `.jpg` files, and cleans up the JSON to maintain low disk usage.
 - **Prompt Manager**: Updated system prompts to guide Gemma in multi-image summarization and purely textual clinical reports.
 
 ## 🧪 Future Improvements

@@ -23,6 +23,7 @@ BASE_DIR   = Path(__file__).parent
 SYNC_DIR   = BASE_DIR / "synced_docs"
 IMAGES_DIR = BASE_DIR / "received_images"
 PROMPT_FILE = BASE_DIR / "prompts.json"
+KNOWLEDGE_FILE = BASE_DIR / "knowledge.json"
 
 SYNC_DIR.mkdir(exist_ok=True)
 IMAGES_DIR.mkdir(exist_ok=True)
@@ -127,6 +128,14 @@ def list_documents():
 def get_prompts():
     """Retorna os prompts atuais (o app baixa isso no startup)."""
     return _load_prompts()
+
+
+@app.get("/knowledge")
+def get_knowledge():
+    """Retorna a base de conhecimento indexada."""
+    if KNOWLEDGE_FILE.exists():
+        return json.loads(KNOWLEDGE_FILE.read_text(encoding="utf-8"))
+    return {"chunks": []}
 
 
 @app.post("/prompts")

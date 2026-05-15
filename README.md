@@ -6,17 +6,18 @@
 
 - **100% Offline**: Processamento local via LiteRT (TensorFlow Lite).
 - **Visão Expandida**: Suporte a múltiplas fotos por documento para análise completa.
+- **RAG Dinâmico**: Base de conhecimento offline (`KnowledgeManager`) que sincroniza automaticamente com o servidor para guiar diagnósticos e triagens.
 - **Memória Persistente**: Histórico de chat preservado individualmente por sessão/documento.
 - **Relatos Flexíveis**: Suporta triagem baseada apenas em texto ou múltiplos anexos visuais.
-- **RAG Local**: Base de conhecimento embutida para protocolos de emergência.
-- **Ecossistema de Sincronização**: Backend em Python (FastAPI + Streamlit) para consolidar dados.
+- **Ecossistema de Sincronização**: Backend em Python (FastAPI + Streamlit) para consolidar dados e gerenciar conhecimento.
 
 ## 🌟 Novidades Recentes
 
-1. **Sessões de Chat**: Cada documento agora mantém seu próprio histórico. Use "Use it" para retomar ou "New Chat" para começar do zero.
-2. **Múltiplas Imagens**: Anexe várias fotos a um caso clínico para triagem detalhada.
-3. **Tool Use Simulada**: O Gemma usa tags como `[SET_STATUS:READY]` para automatizar o status do prontuário via chat.
-4. **Backend Alinhado**: Sincronização otimizada com campos padronizados (`extracted_text`, `gemma_diagnosis`, `status`).
+1. **📚 Knowledge Base**: Nova aba no backend para gerenciar protocolos médicos e indexar conhecimento para o app.
+2. **🔄 Sincronização Inteligente**: O app agora baixa automaticamente a base de conhecimento mais recente ao clicar em "Sync".
+3. **💬 RAG Offline**: Busca ultra-rápida de evidências locais que são injetadas no contexto do Gemma para respostas precisas.
+4. **Sessões de Chat**: Cada documento mantém seu próprio histórico. Use "Use it" para retomar ou "New Chat" para começar do zero.
+
 
 ## 📲 Integração Android (Multi-Imagens)
 

@@ -7,8 +7,8 @@ Assim nasceu a jornada do **Gemma 4 Good**.
 ## Capítulo I: O Cérebro do Escrivão
 Nosso herói não é um soldado, mas um escriba incansável: um cérebro digital de 2.6GB chamado **Gemma 4 Effective 2B**. Sua missão é clara: habitar o dispositivo móvel e funcionar sem um único bit de internet. Através do `ModelDownloader`, ele foi treinado para estar pronto no momento em que o primeiro paciente cruza a porta, transformando o celular em uma estação de trabalho inteligente e autônoma.
 
-## Capítulo II: O Conhecimento dos Mestres (RAG & Treinamento)
-Um escrivão só é útil se compreender o que escreve. O Gemma foi dotado do `LocalKnowledgeManager`, permitindo que ele "aprenda" com arquivos técnicos e documentos de treino. Fragmentado em *chunks* de sabedoria, esse conhecimento permite que o Gemma entenda o jargão médico e o contexto hospitalar. No futuro, ele terá como referência o arquivo original, cruzando os dados capturados com a vasta biblioteca de treinamento para garantir que nenhuma informação se perca.
+## Capítulo II: A Biblioteca Viva (RAG & Conhecimento Local)
+Um escrivão só é útil se compreender o que escreve. O Gemma foi dotado do `KnowledgeManager`, uma biblioteca dinâmica que reside no coração do dispositivo. Fragmentada em *chunks* de sabedoria extraídos de manuais e protocolos médicos, essa base permite que o Gemma entenda contextos complexos e responda com precisão cirúrgica, citando evidências mesmo sem sinal de rede.
 
 ## Capítulo III: A Visão Clínica (OCR & Digitalização)
 Nos campos de batalha dos consultórios, o papel ainda reina. O Gemma recebeu o "Olho do Sentinela" através do **ML Kit OCR**. Ele não apenas vê miniaturas; ele decifra receitas, laudos e prontuários, transformando rabiscos em dados técnicos estruturados. Ele é o braço direito do profissional, agilizando a digitação e a triagem onde o tempo é a moeda mais valiosa.
@@ -25,7 +25,8 @@ A visão do Gemma se expandiu. O antigo limite de uma única imagem foi superado
 ## Capítulo VII: O Relato Puro (Casos sem Imagem)
 Nem toda cura precisa de fotos. O Gemma 4 Good agora entende o valor do relato clínico puro. Seja uma melhora relatada pelo paciente ou uma triagem baseada em sintomas verbais, o sistema permite a criação de documentos de texto, garantindo que o fluxo de digitalização nunca pare, mesmo quando a câmera descansa.
 
-## O Epílogo: A Sincronia Total
-O **Gemma 4 Good** encerra sua jornada como uma ferramenta completa. Com suporte a múltiplos chats, sessões persistentes e uma ponte robusta de Base64 com o backend, ele prova que a inteligência artificial de borda é o futuro da resiliência médica. No silêncio do offline ou no painel do Streamlit, a informação agora é fluida, estruturada e eterna.
+## Capítulo VIII: A Ponte do Saber (Backend & Sync de Dados)
+Para que a biblioteca nunca fique desatualizada, erguemos o portal **"Knowledge Base"** no nosso painel Streamlit. Lá, novos tratados médicos e guias de sobrevivência são processados e indexados em segundos. Através de um simples toque no botão "Sync" do app, o Escrivão cruza a ponte digital e baixa as atualizações mais recentes, garantindo que o conhecimento de ponta chegue aos locais mais remotos do mundo.
 
-
+## O Epílogo: A Inteligência Total e Resiliente
+O **Gemma 4 Good** atinge seu ápice. Com o poder do RAG offline, múltiplas sessões de chat e uma visão multi-imagem integrada, ele se tornou mais do que um assistente; ele é um guardião do conhecimento médico em áreas de sombra. No silêncio do offline ou na gestão do backend, a informação agora é fluida, estruturada e, acima de tudo, salvadora.

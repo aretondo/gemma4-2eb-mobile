@@ -46,16 +46,18 @@ Abaixo está o plano dividido em _chunks_ pequenos. Ao pedir para o Flash execut
 *   [x] **Processamento Padrão (Batch JSON):** Criar uma estrutura de dados (JSON) para acompanhar o status de cada documento ingerido (ex: `pendente`, `aguardando_complemento`, `pronto_sincronizacao`). O Gemma usará esse contexto para guiar a triagem ("é um laudo X, quer complementar?").
 *   [x] **Memória Recente:** Implementar um mecanismo para resumir e salvar as interações recentes, permitindo retomada fluida do trabalho e manutenção de longo contexto.
 
-### Fase 5: Sync Backend & Refinamentos de UI
+### Fase 5: Sync Backend, RAG & Refinamentos de UI
 *   [x] **Backend Streamlit/FastAPI:** Criada pasta `streamlit_backend` com servidor para receber documentos e gerenciar prompts remotamente.
+*   [x] **📚 Knowledge Base (RAG):** Nova aba no backend para upload e indexação de arquivos médicos (`api.py` endpoint `GET /knowledge`).
+*   [x] **🔄 Sync de Conhecimento:** App Android baixa a base de conhecimento atualizada automaticamente no clique de Sync.
+*   [x] **💬 RAG Offline:** Componente `KnowledgeManager.kt` no Android para busca por relevância e injeção de contexto no `ChatViewModel`.
 *   [x] **Edição de Dados (See It):** Tela de edição com correção manual de OCR, metadados da IA e toggle de status (PENDING ↔ READY via FilterChip).
 *   [x] **Gemma Tool Use (Simulado):** O Gemma emite tags `[SET_STATUS:READY]` / `[SET_STATUS:PENDING]` que o app intercepta silenciosamente para atualizar o banco local.
-*   [x] **Copiar Texto:** Toque longo em mensagens do chat para copiar conteúdo.
-*   [x] **Atalhos Reativos:** Botão "Visualizar Metadados" no balão de resposta do Gemma.
-*   [x] **Prompts Atualizados:** Instrução da tag `[SET_STATUS]` injetada nos prompts base. O backend tem botão de injeção automática.
+*   [x] **Múltiplas Imagens & Sessões:** Histórico de chat persistente por documento e suporte a múltiplos anexos Base64.
 *   [x] **Filtro por Tipo no Backend:** Documentos classificados como Laudo, Receita ou Exame com filtro lateral.
 
 ### Fase 6: Entregáveis do Hackathon (Próximos Passos)
+
 *   [ ] **Polimento Final:** Pequenos ajustes visuais.
 *   [ ] **Video Pitch:** Gravar demonstração do fluxo offline -> sync local.
 *   [ ] **Submissão:** Preparar repositório e documentação Kaggle.

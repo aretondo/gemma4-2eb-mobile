@@ -28,7 +28,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private val inferenceManager = GemmaInferenceManager(application)
     private val modelDownloader = ModelDownloader(application)
-    private val localKnowledgeManager = com.example.gemma4good.data.LocalKnowledgeManager(application)
+    private val knowledgeManager = com.example.gemma4good.data.KnowledgeManager(application)
     private val documentManager = com.example.gemma4good.data.DocumentStateManager(application)
     private val syncManager = com.example.gemma4good.data.SyncManager(application)
     private val promptManager = com.example.gemma4good.data.PromptManager(application)
@@ -163,7 +163,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         updateCurrentDocumentMessages()
         _state.value = ChatState.Generating
 
-        val ragContext = localKnowledgeManager.searchContext(text)
+        val relevantChunks = knowledgeManager.findRelevantChunks(text)
+        val ragContext = if (relevantChunks.isNotEmpty()) {
+            "CONTEXTO DA BASE DE CONHECIMENTO:\n" + relevantChunks.joinToString("\n\n") { "Fonte: ${it.source}\nConteúdo: ${it.text}" }
+        } else ""
         var docContext = ""
 
         currentDocumentId?.let { docId ->
@@ -369,6 +372,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     fun syncData(serverIp: String = "192.168.68.102") {
         viewModelScope.launch(Dispatchers.IO) {
+            // Atualizar Base de Conhecimento
+            knowledgeManager.syncKnowledge(serverIp)
+
             val readyDocs = documentManager.getDocuments().filter { it.status == "READY" }
             if (readyDocs.isEmpty()) return@launch
             

@@ -84,6 +84,7 @@ st.markdown("""
 BASE_DIR    = Path(__file__).parent
 SYNC_DIR    = BASE_DIR / "synced_docs"
 PROMPT_FILE = BASE_DIR / "prompts.json"
+KNOWLEDGE_FILE = BASE_DIR / "knowledge.json"
 API_URL     = "http://127.0.0.1:8000"
 
 SYNC_DIR.mkdir(exist_ok=True)
@@ -179,7 +180,7 @@ st.markdown("# 🏥 Gemma4Good Backend")
 st.markdown("Central de comando: recebe documentos do app, gerencia prompts e visualiza dados triados.")
 st.markdown("---")
 
-tab1, tab2, tab3 = st.tabs(["📊 Documentos Sincronizados", "⚙️ Configuração de Prompts", "🔌 API & Integração"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Documentos Sincronizados", "⚙️ Configuração de Prompts", "📚 Knowledge Base", "🔌 API & Integração"])
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1 – Documentos
@@ -358,9 +359,56 @@ with tab2:
             st.rerun()
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 3 – API & Integração
+# TAB 3 – Knowledge Base
 # ══════════════════════════════════════════════════════════════════════════════
 with tab3:
+    st.subheader("📚 Knowledge Base (Local RAG)")
+    st.markdown(
+        "Faça upload de arquivos `.txt` ou `.md` para criar uma base de conhecimento offline. "
+        "O app Android baixará estes dados no Sync para responder perguntas técnicas."
+    )
+
+    uploaded_files = st.file_uploader(
+        "Adicionar documentos à base (.txt, .md)",
+        type=["txt", "md"],
+        accept_multiple_files=True
+    )
+
+    if uploaded_files:
+        if st.button("🏗️ Processar e Indexar Base"):
+            all_chunks = []
+            for uploaded_file in uploaded_files:
+                text = uploaded_file.read().decode("utf-8")
+                # Chunking simplificado por parágrafo (pode ser melhorado para chunks de 500-1000 chars)
+                paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
+                for p in paragraphs:
+                    all_chunks.append({
+                        "source": uploaded_file.name,
+                        "text": p,
+                        "timestamp": datetime.now().isoformat()
+                    })
+
+            # Salva no arquivo knowledge.json
+            KNOWLEDGE_FILE.write_text(json.dumps({"chunks": all_chunks}, ensure_ascii=False, indent=2), encoding="utf-8")
+            st.success(f"✅ Base processada com {len(all_chunks)} trechos. O app baixará no próximo Sync.")
+
+    st.markdown("---")
+    if KNOWLEDGE_FILE.exists():
+        knowledge = json.loads(KNOWLEDGE_FILE.read_text(encoding="utf-8"))
+        chunks = knowledge.get("chunks", [])
+        st.markdown(f"**Base Atual:** {len(chunks)} trechos indexados.")
+
+        with st.expander("Visualizar Trechos Indexados"):
+            for i, chunk in enumerate(chunks):
+                st.markdown(f"**[{i+1}] Fonte: {chunk['source']}**")
+                st.info(chunk["text"])
+    else:
+        st.info("A base de conhecimento está vazia.")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 4 – API & Integração
+# ══════════════════════════════════════════════════════════════════════════════
+with tab4:
     st.subheader("🔌 API FastAPI & Integração Android")
 
     online = api_status()
