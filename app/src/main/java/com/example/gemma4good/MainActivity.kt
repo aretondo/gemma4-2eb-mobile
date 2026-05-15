@@ -50,6 +50,11 @@ import java.io.File
 import java.io.FileOutputStream
 import android.net.Uri
 
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -200,109 +205,212 @@ fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit, onSeeDocume
     val documents by viewModel.documents.collectAsState()
     val context = LocalContext.current
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp)
+    Column(
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)
     ) {
-        item {
+        // Header
+        Surface(
+            tonalElevation = 2.dp,
+            shadowElevation = 2.dp,
+            color = MaterialTheme.colorScheme.surface
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Meus Documentos", style = MaterialTheme.typography.headlineMedium)
+                Column {
+                    Text(
+                        "Meus Arquivos", 
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        "${documents.size} documentos salvos",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 
                 Button(
                     onClick = { 
                         viewModel.syncData()
                         android.widget.Toast.makeText(context, "Sincronizando...", android.widget.Toast.LENGTH_SHORT).show()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.CloudUpload, contentDescription = null)
+                    Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Sync")
+                    Text("Sync Geral")
                 }
             }
         }
-        
+
         if (documents.isEmpty()) {
-            item {
-                Text("Nenhum documento encontrado.")
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        Icons.Default.FolderOpen, 
+                        contentDescription = null, 
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "Nenhum documento encontrado", 
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         } else {
-            items(documents) { doc ->
-                Card(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val imagePath = doc.imagePaths.firstOrNull()
-                        if (imagePath != null) {
-                            AsyncImage(
-                                model = File(imagePath),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.LightGray),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(Icons.Default.InsertDriveFile, contentDescription = null, tint = Color.White)
-                            }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(documents) { doc ->
+                    DocumentCard(
+                        doc = doc,
+                        onDelete = { viewModel.deleteDocument(doc.id) },
+                        onSee = { onSeeDocument(doc.id) },
+                        onUse = {
+                            viewModel.useDocument(doc.id)
+                            onUseDocument()
                         }
-                        
-                        Spacer(modifier = Modifier.width(16.dp))
-                        
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "ID: ${doc.id}", fontWeight = FontWeight.Bold, maxLines = 1)
-                            Text(text = "Status: ${doc.status}", color = if (doc.status == "PENDING") Color.Red else Color.Green)
-                            Text(
-                                text = doc.extractedText,
-                                maxLines = 2,
-                                color = Color.Gray,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(top = 4.dp)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(8.dp))
-                        
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            IconButton(onClick = {
-                                viewModel.deleteDocument(doc.id)
-                            }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Excluir", tint = Color.Red)
-                            }
-                            
-                            Button(
-                                onClick = { onSeeDocument(doc.id) },
-                                modifier = Modifier.padding(bottom = 4.dp),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text("See It", fontSize = 12.sp)
-                            }
+                    )
+                }
+            }
+        }
+    }
+}
 
-                            Button(
-                                onClick = {
-                                    viewModel.useDocument(doc.id)
-                                    onUseDocument()
-                                },
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text("Use It", fontSize = 12.sp)
-                            }
-                        }
+@Composable
+fun DocumentCard(
+    doc: com.example.gemma4good.data.DocumentState,
+    onDelete: () -> Unit,
+    onSee: () -> Unit,
+    onUse: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Thumbnail or Icon
+                val imagePath = doc.imagePaths.firstOrNull()
+                if (imagePath != null) {
+                    AsyncImage(
+                        model = File(imagePath),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Description, 
+                            contentDescription = null, 
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     }
+                }
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = doc.id, 
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 4.dp)
+                    ) {
+                        val statusColor = when(doc.status.uppercase()) {
+                            "READY" -> Color(0xFF4CAF50)
+                            "PENDING" -> Color(0xFFFFA000)
+                            "SYNCED" -> Color(0xFF2196F3)
+                            else -> Color.Gray
+                        }
+                        
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(statusColor)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = doc.status,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = statusColor
+                        )
+                    }
+                }
+
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        Icons.Default.Delete, 
+                        contentDescription = "Excluir", 
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            
+            if (doc.extractedText.isNotBlank()) {
+                Text(
+                    text = doc.extractedText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onSee,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Detalhes", fontSize = 13.sp)
+                }
+                
+                Button(
+                    onClick = onUse,
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(10.dp),
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Abrir Chat", fontSize = 13.sp)
                 }
             }
         }
@@ -660,9 +768,27 @@ fun ChatBubble(message: ChatMessage, onSeeMetadata: (String) -> Unit = {}) {
                 }
                 SelectionContainer {
                     Text(
-                        text = message.text,
+                        text = parseMarkdown(message.text),
                         color = if (message.isUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+                if (message.sources.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Default.MenuBook, 
+                            contentDescription = null, 
+                            modifier = Modifier.size(14.dp),
+                            tint = if (message.isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Fontes: ${message.sources.joinToString(", ")}",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (message.isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
                 if (message.documentId != null) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -710,6 +836,31 @@ private fun startListening(
     })
 
     speechRecognizer.startListening(intent)
+}
+
+/**
+ * Um parser de Markdown ultra simples para AnnotatedString.
+ * Suporta negrito (**text**) e listas básicas.
+ */
+@Composable
+fun parseMarkdown(text: String): AnnotatedString {
+    return buildAnnotatedString {
+        var currentText = text
+        val boldRegex = Regex("""\*\*(.*?)\*\*""")
+        
+        var lastIdx = 0
+        boldRegex.findAll(currentText).forEach { match ->
+            // Texto antes do negrito
+            append(currentText.substring(lastIdx, match.range.first))
+            
+            // Texto em negrito
+            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(match.groupValues[1])
+            }
+            lastIdx = match.range.last + 1
+        }
+        append(currentText.substring(lastIdx))
+    }
 }
 
 fun enhanceContrast(src: Bitmap): Bitmap {

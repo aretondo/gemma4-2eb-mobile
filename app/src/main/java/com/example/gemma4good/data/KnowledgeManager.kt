@@ -77,11 +77,18 @@ class KnowledgeManager(private val context: Context) {
         val chunks = getChunks()
         if (chunks.isEmpty()) return emptyList()
 
-        val queryWords = query.lowercase().split(" ").filter { it.length > 3 }
+        // Incluindo palavras menores (com 3 letras) e removendo acentos/caracteres especiais se necessário
+        val queryWords = query.lowercase()
+            .split(Regex("\\W+"))
+            .filter { it.length >= 3 }
+        
         if (queryWords.isEmpty()) return emptyList()
 
+        android.util.Log.d("KnowledgeManager", "Searching for keywords: $queryWords")
+
         return chunks.map { chunk ->
-            val score = queryWords.count { word -> chunk.text.lowercase().contains(word) }
+            val chunkTextLower = chunk.text.lowercase()
+            val score = queryWords.count { word -> chunkTextLower.contains(word) }
             chunk to score
         }
         .filter { it.second > 0 }

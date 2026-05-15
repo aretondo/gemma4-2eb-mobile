@@ -147,111 +147,129 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         currentMessages.add(ChatMessage(text, true))
         _messages.value = currentMessages
 
-        // Se não houver documento vinculado, cria um agora para salvar o relato manual
+        // Se não houver documento vinculado, cria um agora
         if (currentDocumentId == null) {
             val newDocId = "doc_${System.currentTimeMillis()}"
             val newDoc = DocumentState(
                 id = newDocId,
-                extractedText = "", // Texto OCR vazio pois é um relato manual
-                context = "Relato inicial: $text"
+                extractedText = "",
+                context = "Relato inicial: $text",
+                messages = _messages.value
             )
             documentManager.saveDocument(newDoc)
             currentDocumentId = newDocId
             refreshDocuments()
         }
 
-        updateCurrentDocumentMessages()
         _state.value = ChatState.Generating
 
-        val relevantChunks = knowledgeManager.findRelevantChunks(text)
-        val ragContext = if (relevantChunks.isNotEmpty()) {
-            "CONTEXTO DA BASE DE CONHECIMENTO:\n" + relevantChunks.joinToString("\n\n") { "Fonte: ${it.source}\nConteúdo: ${it.text}" }
-        } else ""
-        var docContext = ""
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // --- ETAPA 1: Intent Parsing com Gemma ---
+                val intentPrompt = """
+                    Classifique a intenção do usuário em apenas UMA palavra:
+                    - 'READY' (se ele quer finalizar, salvar ou diz que está pronto/ok)
+                    - 'PENDING' (se ele quer mudar, corrigir ou anotar algo novo)
+                    - 'QUERY' (se for uma pergunta ou dúvida técnica)
+                    
+                    Mensagem: "$text"
+                    Intenção:
+                """.trimIndent()
+                
+                var intentResponse = ""
+                inferenceManager.generateResponse(intentPrompt).collect { token ->
+                    intentResponse += token
+                }
+                val intent = intentResponse.uppercase().trim()
+                android.util.Log.d("ChatViewModel", "Gemma detected intent: $intent")
 
-        currentDocumentId?.let { docId ->
-            val doc = documentManager.getDocuments().find { it.id == docId }
-            if (doc != null && doc.context.isNotBlank()) {
-                docContext = "\n\nCONTEXTO DO DOCUMENTO ATUAL:\n" + doc.context
+                // --- ETAPA 2: Execução baseada na intenção ---
+                if (intent.contains("READY")) {
+                    withContext(Dispatchers.Main) { handleStatusCommand("READY") }
+                    return@launch
+                }
+
+                if (intent.contains("PENDING")) {
+                    updateDocumentStatusSilently("PENDING")
+                }
+
+                // Fluxo Normal (RAG + Resposta Técnica)
+                val relevantChunks = knowledgeManager.findRelevantChunks(text)
+                val ragContext = if (relevantChunks.isNotEmpty()) {
+                    "\n[DADOS DE REFERÊNCIA TÉCNICA]:\n" + 
+                    relevantChunks.joinToString("\n\n") { "Fonte: ${it.source}\nConteúdo: ${it.text}" }
+                } else ""
+
+                var docContextString = ""
+                currentDocumentId?.let { docId ->
+                    val doc = documentManager.getDocuments().find { it.id == docId }
+                    if (doc != null && doc.context.isNotBlank()) {
+                        docContextString = "\n[CONTEÚDO DO ARQUIVO ATUAL]:\n" + doc.context
+                    }
+                }
+
+                val conversationHistory = _messages.value.takeLast(6).joinToString("\n") { 
+                    (if (it.isUser) "Usuário: " else "Gemma: ") + it.text 
+                }
+
+                val finalPrompt = """
+                    ${promptManager.getChatPrompt()}
+                    $ragContext
+                    $docContextString
+                    Histórico: $conversationHistory
+                    Pergunta: $text
+                    Resposta Direta:
+                """.trimIndent()
+
+                processGemmaResponse(finalPrompt, relevantChunks.map { it.source }.distinct())
+
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _state.value = ChatState.Error(e.localizedMessage ?: "Erro")
+                }
             }
         }
+    }
 
-        val systemPrompt = promptManager.getChatPrompt() + "\n\nIMPORTANTE: Se o usuário pedir para marcar o documento como pronto ou pendente, você DEVE responder com uma confirmação amigável E incluir a tag correspondente (ex: [SET_STATUS:READY]). NUNCA responda apenas com a tag."
-        
-        val finalPrompt = if (ragContext.isNotEmpty() || docContext.isNotEmpty()) {
-            "$systemPrompt\n\n[CONTEXTO RELEVANTE]:\n$ragContext$docContext\n\n[DADOS/PERGUNTA DO PROFISSIONAL]: $text"
-        } else {
-            "$systemPrompt\n\n[DADOS/PERGUNTA DO PROFISSIONAL]: $text"
-        }
+    private suspend fun processGemmaResponse(prompt: String, sources: List<String>) {
+        var firstToken = true
+        var fullResponse = ""
+        inferenceManager.generateResponse(prompt).collect { token ->
+            fullResponse += token
+            val tagRegex = Regex("""\s*\[\s*SET_STATUS\s*:\s*(READY|PENDING|SYNCED)\s*\]\s*""", RegexOption.IGNORE_CASE)
+            val cleanText = fullResponse.replace(tagRegex, "").trim()
 
-        viewModelScope.launch {
-            try {
-                var firstToken = true
-                var fullResponse = ""
-                inferenceManager.generateResponse(finalPrompt).collect { token ->
-                    fullResponse += token
-                    
-                    // Remove tags do texto exibido ao usuário
-                    val cleanText = fullResponse
-                        .replace("[SET_STATUS:READY]", "")
-                        .replace("[SET_STATUS:PENDING]", "")
-                        .trim()
-
-                    val updatedMessages = _messages.value.toMutableList()
-                    if (cleanText.isNotBlank()) {
-                        if (firstToken) {
-                            updatedMessages.add(ChatMessage(cleanText, false))
-                            firstToken = false
-                        } else {
-                            if (updatedMessages.isNotEmpty()) {
-                                val lastMsg = updatedMessages.last()
-                                if (!lastMsg.isUser) {
-                                    updatedMessages[updatedMessages.size - 1] = lastMsg.copy(text = cleanText)
-                                } else {
-                                    updatedMessages.add(ChatMessage(cleanText, false))
-                                }
+            withContext(Dispatchers.Main) {
+                val updatedMessages = _messages.value.toMutableList()
+                if (cleanText.isNotBlank()) {
+                    if (firstToken) {
+                        updatedMessages.add(ChatMessage(cleanText, false, sources = sources))
+                        firstToken = false
+                    } else {
+                        if (updatedMessages.isNotEmpty()) {
+                            val lastMsg = updatedMessages.last()
+                            if (!lastMsg.isUser) {
+                                updatedMessages[updatedMessages.size - 1] = lastMsg.copy(text = cleanText, sources = sources)
+                            } else {
+                                updatedMessages.add(ChatMessage(cleanText, false, sources = sources))
                             }
                         }
-                        _messages.value = updatedMessages
-                        updateCurrentDocumentMessages()
                     }
+                    _messages.value = updatedMessages
+                    updateCurrentDocumentMessages()
                 }
-
-                // Processar tags de comando na resposta final
-                android.util.Log.d("ChatViewModel", "Processing final response tags. FullResponse length: ${fullResponse.length}")
-                if (fullResponse.contains("[SET_STATUS:READY]")) {
-                    android.util.Log.d("ChatViewModel", "Tag [SET_STATUS:READY] detected")
-                    currentDocumentId?.let { docId ->
-                        documentManager.getDocuments().find { it.id == docId }?.let { doc ->
-                            updateDocument(doc.copy(status = "READY"))
-                            android.util.Log.d("ChatViewModel", "Document $docId status updated to READY")
-                        } ?: android.util.Log.w("ChatViewModel", "Document $docId not found for status update")
-                    } ?: android.util.Log.w("ChatViewModel", "currentDocumentId is null")
-                } else if (fullResponse.contains("[SET_STATUS:PENDING]")) {
-                    android.util.Log.d("ChatViewModel", "Tag [SET_STATUS:PENDING] detected")
-                    currentDocumentId?.let { docId ->
-                        documentManager.getDocuments().find { it.id == docId }?.let { doc ->
-                            updateDocument(doc.copy(status = "PENDING"))
-                            android.util.Log.d("ChatViewModel", "Document $docId status updated to PENDING")
-                        } ?: android.util.Log.w("ChatViewModel", "Document $docId not found for status update")
-                    } ?: android.util.Log.w("ChatViewModel", "currentDocumentId is null")
-                }
-
-                currentDocumentId?.let { docId ->
-                    val docs = documentManager.getDocuments()
-                    val doc = docs.find { it.id == docId }
-                    if (doc != null) {
-                        val newContext = doc.context + "\nUser: $text\nGemma: $fullResponse"
-                        documentManager.saveDocument(doc.copy(context = newContext))
-                    }
-                }
-
-                saveRecentMemory()
-                _state.value = ChatState.Idle
-            } catch (e: Exception) {
-                _state.value = ChatState.Error(e.localizedMessage ?: "Erro desconhecido")
             }
         }
+        
+        // Atualiza contexto do documento no final
+        currentDocumentId?.let { docId ->
+            val doc = documentManager.getDocuments().find { it.id == docId }
+            if (doc != null) {
+                val updatedContext = doc.context + "\n[Update]: " + fullResponse
+                documentManager.saveDocument(doc.copy(context = updatedContext, messages = _messages.value))
+            }
+        }
+        withContext(Dispatchers.Main) { _state.value = ChatState.Idle }
     }
 
     fun onDocumentScanned(extractedText: String, imagePath: String? = null) {
@@ -327,7 +345,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
                 val doc = documentManager.getDocuments().find { it.id == docId }
                 if (doc != null) {
-                    val newContext = if (doc.context.isBlank()) "Gemma: $fullResponse" else doc.context + "\nGemma: $fullResponse"
+                    val newContext = if (doc.context.isBlank()) "Gemma: $fullResponse" else doc.context + "\n[Update]: $fullResponse"
                     documentManager.saveDocument(doc.copy(context = newContext, messages = _messages.value))
                     refreshDocuments()
                 }
@@ -393,6 +411,31 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun handleStatusCommand(status: String) {
+        val docId = currentDocumentId ?: return
+        val doc = documentManager.getDocuments().find { it.id == docId } ?: return
+        
+        updateDocument(doc.copy(status = status))
+        
+        val response = if (status == "READY") {
+            "Entendido. Marquei este documento como **PRONTO** para sincronização."
+        } else {
+            "Alterado para **PENDENTE**. O que mais precisamos ajustar?"
+        }
+        
+        val currentMessages = _messages.value.toMutableList()
+        currentMessages.add(ChatMessage(response, false))
+        _messages.value = currentMessages
+        updateCurrentDocumentMessages()
+        _state.value = ChatState.Idle
+    }
+
+    private fun updateDocumentStatusSilently(status: String) {
+        val docId = currentDocumentId ?: return
+        val doc = documentManager.getDocuments().find { it.id == docId } ?: return
+        updateDocument(doc.copy(status = status))
+    }
+
     private fun saveRecentMemory() {
         val memoryFile = java.io.File(getApplication<Application>().getExternalFilesDir(null), "recent_memory.json")
         try {
@@ -403,6 +446,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 item.put("isUser", msg.isUser)
                 msg.imagePath?.let { item.put("imagePath", it) }
                 msg.documentId?.let { item.put("documentId", it) }
+                if (msg.sources.isNotEmpty()) {
+                    val sourcesArray = org.json.JSONArray()
+                    msg.sources.forEach { sourcesArray.put(it) }
+                    item.put("sources", sourcesArray)
+                }
                 jsonArray.put(item)
             }
             memoryFile.writeText(jsonArray.toString(2))
@@ -420,12 +468,20 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 val loadedMessages = mutableListOf<ChatMessage>()
                 for (i in 0 until jsonArray.length()) {
                     val item = jsonArray.getJSONObject(i)
+                    val sourcesList = mutableListOf<String>()
+                    if (item.has("sources")) {
+                        val sArray = item.getJSONArray("sources")
+                        for (j in 0 until sArray.length()) {
+                            sourcesList.add(sArray.getString(j))
+                        }
+                    }
                     loadedMessages.add(
                         ChatMessage(
                             text = item.getString("text"),
                             isUser = item.getBoolean("isUser"),
                             imagePath = if (item.has("imagePath")) item.getString("imagePath") else null,
-                            documentId = if (item.has("documentId")) item.getString("documentId") else null
+                            documentId = if (item.has("documentId")) item.getString("documentId") else null,
+                            sources = sourcesList
                         )
                     )
                 }

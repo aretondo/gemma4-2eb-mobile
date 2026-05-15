@@ -99,9 +99,15 @@ SET_STATUS_TAG_INSTRUCTION = (
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def load_prompts() -> dict:
-    if PROMPT_FILE.exists():
-        return json.loads(PROMPT_FILE.read_text(encoding="utf-8"))
-    return {"chat_system_prompt": "", "ocr_system_prompt": ""}
+    try:
+        if PROMPT_FILE.exists():
+            return json.loads(PROMPT_FILE.read_text(encoding="utf-8"))
+    except:
+        pass
+    return {
+        "chat_system_prompt": "Você é a 'Gemma Scan Assistant'. RESPONDA DIRETAMENTE à pergunta do usuário usando o contexto técnico fornecido. NÃO faça meta-análise e NÃO explique seu raciocínio.",
+        "ocr_system_prompt": "Extraia dados do OCR. Seja técnica."
+    }
 
 def save_prompts(data: dict) -> None:
     PROMPT_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -377,16 +383,34 @@ with tab3:
     if uploaded_files:
         if st.button("🏗️ Processar e Indexar Base"):
             all_chunks = []
+            chunk_size = 800
+            overlap = 100
+
             for uploaded_file in uploaded_files:
                 text = uploaded_file.read().decode("utf-8")
-                # Chunking simplificado por parágrafo (pode ser melhorado para chunks de 500-1000 chars)
-                paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
-                for p in paragraphs:
+
+                # Chunking robusto com overlap
+                start = 0
+                while start < len(text):
+                    end = start + chunk_size
+                    chunk_text = text[start:end]
+
+                    # Tenta não cortar palavras no meio
+                    if end < len(text):
+                        last_space = chunk_text.rfind(' ')
+                        if last_space != -1:
+                            chunk_text = chunk_text[:last_space]
+                            end = start + last_space
+
                     all_chunks.append({
                         "source": uploaded_file.name,
-                        "text": p,
+                        "text": chunk_text.strip(),
                         "timestamp": datetime.now().isoformat()
                     })
+
+                    start = end - overlap
+                    if start < 0: start = 0
+                    if end >= len(text): break
 
             # Salva no arquivo knowledge.json
             KNOWLEDGE_FILE.write_text(json.dumps({"chunks": all_chunks}, ensure_ascii=False, indent=2), encoding="utf-8")

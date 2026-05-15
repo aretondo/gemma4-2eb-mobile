@@ -28,12 +28,16 @@ KNOWLEDGE_FILE = BASE_DIR / "knowledge.json"
 SYNC_DIR.mkdir(exist_ok=True)
 IMAGES_DIR.mkdir(exist_ok=True)
 
-# Garante que prompts.json existe com prompts melhorados
-if not PROMPT_FILE.exists():
-    PROMPT_FILE.write_text(json.dumps({
-        "chat_system_prompt": "Você é a 'Gemma Scan Assistant'. Ajude o profissional a estruturar relatos clínicos e dados de OCR. Se o usuário fornecer um relato verbal/texto, extraia os pontos principais (estado geral, evolução, conduta). Se houver OCR, valide os dados técnicos. Quando as informações estiverem maduras, sugira o status [SET_STATUS:READY]. Seja técnica e objetiva.",
-        "ocr_system_prompt": "Você recebeu dados de OCR. Extraia os campos técnicos. Considere que o usuário pode enviar múltiplas páginas/fotos para o mesmo caso; combine as novas informações com o contexto anterior. Pergunte se falta algo ou se pode marcar como pronto para sincronia."
-    }, ensure_ascii=False, indent=2))
+# Garante que prompts.json existe com prompts de alta performance (Versão Final)
+def ensure_default_prompts():
+    default_data = {
+        "chat_system_prompt": "Você é a 'Gemma Scan Assistant', especialista em saúde. Sua missão é responder perguntas técnicas usando os dados de referência e manter um resumo clínico atualizado. Seja objetiva, técnica e direta. Não explique seu raciocínio.",
+        "ocr_system_prompt": "Analise o OCR e extraia: Nome do Paciente, Medicamentos (Nome e Dosagem) e Diagnósticos. Combine informações de fotos anteriores se existirem. Seja breve e estruturada."
+    }
+    # Forçamos a criação/sobrescrita para garantir a versão final
+    PROMPT_FILE.write_text(json.dumps(default_data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+ensure_default_prompts()
 
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(

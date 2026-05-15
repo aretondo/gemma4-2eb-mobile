@@ -4,5 +4,6 @@ data class ChatMessage(
     val text: String,
     val isUser: Boolean,
     val imagePath: String? = null,
-    val documentId: String? = null
+    val documentId: String? = null,
+    val sources: List<String> = emptyList()
 )

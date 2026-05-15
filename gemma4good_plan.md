@@ -48,17 +48,17 @@ Abaixo está o plano dividido em _chunks_ pequenos. Ao pedir para o Flash execut
 
 ### Fase 5: Sync Backend, RAG & Refinamentos de UI
 *   [x] **Backend Streamlit/FastAPI:** Criada pasta `streamlit_backend` com servidor para receber documentos e gerenciar prompts remotamente.
-*   [x] **📚 Knowledge Base (RAG):** Nova aba no backend para upload e indexação de arquivos médicos (`api.py` endpoint `GET /knowledge`).
+*   [x] **📚 Knowledge Base (RAG):** Nova aba no backend para upload e indexação de arquivos médicos (`api.py` endpoint `GET /knowledge`), com chunking de 800/100.
 *   [x] **🔄 Sync de Conhecimento:** App Android baixa a base de conhecimento atualizada automaticamente no clique de Sync.
-*   [x] **💬 RAG Offline:** Componente `KnowledgeManager.kt` no Android para busca por relevância e injeção de contexto no `ChatViewModel`.
+*   [x] **💬 RAG Offline Sensível:** Busca Kotlin otimizada para palavras curtas. As respostas agora exibem "Fontes: [nome_do_arquivo]".
 *   [x] **Edição de Dados (See It):** Tela de edição com correção manual de OCR, metadados da IA e toggle de status (PENDING ↔ READY via FilterChip).
-*   [x] **Gemma Tool Use (Simulado):** O Gemma emite tags `[SET_STATUS:READY]` / `[SET_STATUS:PENDING]` que o app intercepta silenciosamente para atualizar o banco local.
-*   [x] **Múltiplas Imagens & Sessões:** Histórico de chat persistente por documento e suporte a múltiplos anexos Base64.
+*   [x] **Arquitetura de Dois Estágios:** Intent Parsing prévio (Comando vs Pergunta) para evitar confusão da IA.
+*   [x] **Gemma Tool Use (Simulado):** O Gemma emite tags `[SET_STATUS:READY]` invisíveis (Regex robusta) para atualizar o banco local.
+*   [x] **Múltiplas Imagens & Sessões:** Histórico de chat persistente por documento e suporte a anexos Base64.
 *   [x] **Filtro por Tipo no Backend:** Documentos classificados como Laudo, Receita ou Exame com filtro lateral.
 
 ### Fase 6: Entregáveis do Hackathon (Próximos Passos)
-
-*   [ ] **Polimento Final:** Pequenos ajustes visuais.
+*   [x] **Polimento Final:** Redesign da tela "Meus Arquivos" (Material 3), Prompts ultra-enxutos e Parser de Markdown nativo no Android.
 *   [ ] **Video Pitch:** Gravar demonstração do fluxo offline -> sync local.
 *   [ ] **Submissão:** Preparar repositório e documentação Kaggle.
 

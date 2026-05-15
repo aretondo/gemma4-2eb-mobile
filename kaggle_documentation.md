@@ -18,14 +18,15 @@ This project aims to leverage **Gemma 4** (Effective 2B) to provide a robust, of
 
 ## 📈 Key Features & Implementation Steps
 
-### 1. Offline Model Deployment
+### 1. Offline Model Deployment & Two-Stage Intent Parsing
 We implemented a `ModelDownloader` that fetches the Gemma 2B model directly from Hugging Face. Once downloaded, the model runs entirely offline using the LiteRT SDK, ensuring data privacy and reliability in remote areas.
+- **Intent Parsing Architecture**: Before generating a full response, the app uses Gemma to identify the user's "intent" (Command vs. Question). This prevents the AI from getting confused and ensures that operational commands (like "mark as ready") execute instantly.
 
 ### 2. Local Knowledge Base (RAG) & Dynamic Sync
 To provide accurate clinical and survival guidance, we implemented a full RAG (Retrieval-Augmented Generation) pipeline:
 - **Backend Knowledge Manager**: A new dashboard in the Streamlit backend allows uploading `.txt` and `.md` protocols. These are automatically chunked and indexed into a `knowledge_base.json`.
 - **Automatic Sync**: Upon clicking "Sync" in the Android app, it automatically fetches the latest knowledge base from the `GET /knowledge` endpoint.
-- **Offline Relevance Search**: We implemented a high-speed `KnowledgeManager` in Kotlin that performs keyword-based relevance scoring entirely offline.
+- **Sensitive Offline Relevance Search**: We implemented a high-speed `KnowledgeManager` in Kotlin that performs keyword-based relevance scoring entirely offline. It now recognizes small but critical words (e.g., "dor", "mar") ensuring no relevant chunks are skipped.
 - **Context Injection**: Relevant chunks are injected into the Gemma prompt, enabling the model to answer specific questions (e.g., "how to treat a snake bite") using verified local protocols.
 
 
@@ -39,7 +40,8 @@ The app features a sophisticated document scanning system:
 - **Persistent Sessions**: `DocumentState` now stores its own list of messages, enabling per-document conversation history.
 - **Context Switching**: Using "Use it" on a document restores its specific chat history, while "New Chat" allows starting fresh clinical reports.
 - **Text-Only Reports**: Full support for clinical triage based on manual descriptions even without accompanying images.
-- **Gemma Tool Use (Simulated)**: The model can emit `[SET_STATUS:READY]` tags to automate status updates based on natural language confirmation.
+- **Gemma Tool Use (Simulated) & Invisible Regex**: The model can emit `[SET_STATUS:READY]` tags to automate status updates based on natural language confirmation. A robust Regex on Android completely hides these tags from the UI, ensuring a clean experience.
+- **Ultra-Lean Prompts & Markdown**: Prompts were simplified to enforce direct, technical answers without meta-analysis, structured cleanly with "[DADOS DE REFERÊNCIA]" headers. An embedded Markdown parser formats responses beautifully with bold text and bullet points.
 
 ### 5. Local Backend & Sync (v1.2)
 The backend now serves as a central knowledge hub:

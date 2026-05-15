@@ -13,11 +13,13 @@
 
 ## 🌟 Novidades Recentes
 
-1. **📚 Knowledge Base**: Nova aba no backend para gerenciar protocolos médicos e indexar conhecimento para o app.
+1. **📚 Knowledge Base**: Nova aba no backend para gerenciar protocolos médicos e indexar conhecimento para o app, com chunking inteligente (800 caracteres / 100 overlap).
 2. **🔄 Sincronização Inteligente**: O app agora baixa automaticamente a base de conhecimento mais recente ao clicar em "Sync".
-3. **💬 RAG Offline**: Busca ultra-rápida de evidências locais que são injetadas no contexto do Gemma para respostas precisas.
-4. **Sessões de Chat**: Cada documento mantém seu próprio histórico. Use "Use it" para retomar ou "New Chat" para começar do zero.
-
+3. **💬 RAG Offline Sensível**: Busca ultra-rápida (reconhece até palavras curtas como "dor" ou "mar") de evidências locais. Respostas exibem indicadores de "Fontes: [nome_do_arquivo]".
+4. **Sessões de Chat Persistentes**: Cada documento mantém seu próprio histórico e o app lembra das fontes usadas mesmo após fechado. Use "Use it" ou "New Chat".
+5. **Redesign de "Meus Arquivos"**: Nova interface Material 3 com cartões arredondados, badges coloridos de status e botões de ação rápidos.
+6. **🧠 Arquitetura de 2 Estágios & Prompts Enxutos**: O Gemma primeiro identifica a intenção (Pergunta vs. Comando) para respostas instantâneas. Os prompts foram reescritos para serem ultra-diretos, sem meta-análise.
+7. **Visuais Limpos**: Parser nativo de Markdown formata a resposta no chat, e uma Regex robusta esconde os comandos técnicos `[SET_STATUS]` dos olhos do usuário.
 
 ## 📲 Integração Android (Multi-Imagens)
 

@@ -11,9 +11,16 @@ class PromptManager(private val context: Context) {
         .readTimeout(5, TimeUnit.SECONDS)
         .build()
 
-    // Fallbacks padrão
-    private var chatPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant', uma ferramenta especializada para profissionais de saúde e pesquisadores. Seu papel é auxiliar na organização, digitalização e análise técnica de dados médicos. Seja extremamente técnica e objetiva. Se o usuário confirmar que o documento está pronto, confirme verbalmente (ex: 'Entendido, marquei como pronto') E inclua a tag [SET_STATUS:READY] na resposta."
-    private var ocrPrompt = "INSTRUÇÃO DO SISTEMA: Você é a 'Gemma Scan Assistant'. O profissional enviou um documento médico via OCR. Extraia os dados técnicos. Se o documento parecer completo, pergunte se pode marcar como pronto para sincronizar."
+    // Fallbacks padrão ultra-simplificados para Gemma 2B
+    private var chatPrompt = """
+        Você é uma IA médica assistente. 
+        OBJETIVO: Responder ao usuário e manter um resumo estruturado dos dados clínicos no campo [CONTEÚDO DO ARQUIVO ATUAL].
+        INSTRUÇÃO: 
+        1. Responda de forma direta e técnica.
+        2. Se o usuário informar novos dados (remédios, sintomas, evolução), resuma-os brevemente para serem salvos no arquivo.
+        3. Foco exclusivo em dados médicos. Não faça comentários sobre o sistema.
+    """.trimIndent()
+    private var ocrPrompt = "Analise o OCR médico e liste: Medicamentos, Dosagens e Orientações. Seja breve."
 
     fun getChatPrompt() = chatPrompt
     fun getOcrPrompt() = ocrPrompt

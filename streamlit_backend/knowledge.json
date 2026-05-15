@@ -1,164 +1,74 @@
 {
   "chunks": [
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "# Protocolo de Segurança e Conduta em Zonas de Conflito Armado",
-      "timestamp": "2026-05-14T23:12:56.793655"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "# Protocolo de Biossegurança e Saúde Ambiental em Áreas Remotas\n**Referência Técnica:** Organização Mundial da Saúde (OMS) - Diretrizes WASH, Controle de Vetores e Prevenção e Controle de Infecções (PCI).\n\nEste documento estabelece as diretrizes técnicas operacionais para a manutenção da biossegurança, prevenção de surtos e gestão de saúde ambiental em cenários de isolamento geográfico e recursos limitados.\n\n## 1. Tratamento e Controle de Qualidade da Água (WASH)\nA garantia de água potável é a principal barreira contra doenças diarreicas agudas, cólera e febre tifoide.\n\n### 1.1. Filtração Inicial\n- Se a água estiver turva, realize a decantação prévia ou filtração utilizando tecidos limpos sobrepostos ou filtros de areia/carvão improvisados antes da desinfecção.\n\n### 1.2. Desinfecção",
+      "timestamp": "2026-05-14T23:42:24.096785"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "Este documento detalha procedimentos de segurança para a proteção de civis e pessoal não combatente em áreas de hostilidades ativas. O foco principal é a mitigação de riscos e a preservação da integridade física.",
-      "timestamp": "2026-05-14T23:12:56.793664"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "mpos sobrepostos ou filtros de areia/carvão improvisados antes da desinfecção.\n\n### 1.2. Desinfecção Térmica (Fervura)\n- **Procedimento Padrão:** A água deve atingir fervura contínua (borbulhamento vigoroso) por pelo menos **1 minuto**.\n- **Alta Altitude (acima de 2.000m):** Ferva a água por **3 minutos** contínuos, devido à redução do ponto de ebulição.\n- Armazene no mesmo recipiente em que foi fervida, tampado, para evitar recontaminação.\n\n### 1.3. Desinfecção Química (Cloração)\n- Utilize hipoclorito de sódio ou pastilhas de purificação (NaDCC) conforme as diretrizes do fabricante.\n- **Dosagem Geral (Solução de Hipoclorito a 2,5%):** Adicione 2 gotas por litro de água limpa. Se a água estiver turva, dobre a dose (4 gotas).\n- **Tempo de Contato:** Aguarde **30 minutos** antes do",
+      "timestamp": "2026-05-14T23:42:24.096799"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "## 1. Preparação e Consciência Situacional\nA sobrevivência em zonas de guerra depende da antecipação e do reconhecimento constante do ambiente.\n- **Mapeamento de Áreas Seguras:** Identifique abrigos antiaéreos, hospitais, embaixadas e zonas desmilitarizadas.\n- **Rede de Informações:** Utilize rádios de pilha e fontes de notícias confiáveis para monitorar o deslocamento de tropas e linhas de frente.\n- **Equipamento de Emergência (Go-Bag):** Mantenha uma mochila pronta com documentos, água, alimentos secos, kit de primeiros socorros, lanterna e dinheiro em espécie (moeda forte).",
-      "timestamp": "2026-05-14T23:12:56.793667"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "água estiver turva, dobre a dose (4 gotas).\n- **Tempo de Contato:** Aguarde **30 minutos** antes do consumo.\n\n## 2. Segurança Alimentar (As 5 Chaves da OMS)\nProcedimentos para mitigar a transmissão de patógenos via ingestão.\n\n1. **Mantenha a limpeza:** Lave as mãos antes de manusear alimentos. Higienize as superfícies e os equipamentos de preparo.\n2. **Separe alimentos crus e cozidos:** Utilize utensílios diferentes para o manejo de carnes cruas.\n3. **Cozinhe completamente:** Alimentos devem atingir a temperatura interna de segurança (mínimo de 70°C). Caldos e sopas devem ferver.\n4. **Mantenha os alimentos em temperaturas seguras:** Não deixe alimentos cozidos em temperatura ambiente por mais de 2 horas. \n5. **Use água e matérias-primas seguras:** Utilize apenas água tratada (conforme",
+      "timestamp": "2026-05-14T23:42:24.096804"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "## 2. Procedimentos durante Bombardeios e Ataques Aéreos\nAo ouvir sirenes ou explosões:\n1.  **Procure Abrigo Imediato:** O local ideal é um bunker ou subsolo. Na ausência destes, posicione-se no andar mais baixo, no centro da edificação, longe de janelas e superfícies de vidro.\n2.  **Posição de Segurança:** Deite-se de bruços, abra ligeiramente a boca (para equilibrar a pressão interna em caso de explosão próxima) e cubra a nuca com as mãos.\n3.  **Janelas:** Mantenha as janelas abertas ou reforçadas com fita adesiva em \"X\" para evitar que estilhaços de vidro se projetem para o interior.",
-      "timestamp": "2026-05-14T23:12:56.793669"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "r mais de 2 horas. \n5. **Use água e matérias-primas seguras:** Utilize apenas água tratada (conforme seção 1) para a lavagem e preparo.\n\n## 3. Controle de Vetores e Prevenção de Doenças Endêmicas\nFoco na interrupção do ciclo de transmissão de malária, dengue, zika, chikungunya, febre amarela e leishmaniose.\n\n### 3.1. Proteção Individual\n- **Repelentes:** Uso de repelentes com eficácia comprovada (DEET, Icaridina ou IR3535) nas áreas expostas da pele.\n- **Mosquiteiros:** Uso de mosquiteiros impregnados com inseticida de longa duração (MILD) para dormir.\n- **Vestuário:** Roupas de mangas longas e calças compridas, preferencialmente de cores claras.\n\n### 3.2. Controle Ambiental\n- Eliminação rigorosa de qualquer acúmulo de água parada ao redor da base de operações ou acampamento.\n-",
+      "timestamp": "2026-05-14T23:42:24.096809"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "## 3. Movimentação e Deslocamento\nDeslocar-se em zona de guerra é extremamente perigoso e deve ser evitado a menos que a evacuação seja necessária.\n- **Identificação:** Se for civil, use roupas de cores neutras e discretas (evite padrões militares ou cores táticas). Se estiver em um veículo, sinalize claramente com \"TV\", \"PRESS\" ou \"CLANDESTINO\" conforme sua função, ou uma bandeira branca se em evacuação civil.\n- **Checkpoints:** Aproxime-se lentamente, mantenha as mãos visíveis, desligue luzes internas à noite e siga todas as ordens sem movimentos bruscos.\n- **Minas e UXO (Artefatos Não Explodidos):** Nunca saia de estradas pavimentadas ou trilhas conhecidas. Não toque em objetos estranhos ou destroços de combate.",
-      "timestamp": "2026-05-14T23:12:56.793671"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "iminação rigorosa de qualquer acúmulo de água parada ao redor da base de operações ou acampamento.\n- Armazenamento de água tratada apenas em recipientes hermeticamente fechados.\n\n## 4. Manejo de Resíduos de Serviços de Saúde (MRSS) em Campo\nGerenciamento de resíduos para prevenir contaminação do solo, lençóis freáticos e acidentes biológicos.\n\n### 4.1. Segregação Imediata\n- **Perfurocortantes (Agulhas, bisturis):** Descarte imediato em recipientes rígidos e resistentes a perfuração (caixas coletoras específicas ou garrafas PET/plástico duro improvisadas, com tampa).\n- **Resíduos Infecciosos (Gaze com sangue, curativos):** Saco plástico isolado e vedado.\n\n### 4.2. Destinação Final Temporária\n- Na impossibilidade de transporte para unidade de saúde estruturada, utilize **Fossas Sépticas de",
+      "timestamp": "2026-05-14T23:42:24.096812"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "## 4. Comunicação e Neutralidade\n- **Discrição Digital:** Evite postar localizações em tempo real ou fotos de movimentações militares, o que pode torná-lo um alvo ou suspeito de espionagem.\n- **Neutralidade:** Evite discussões políticas ou demonstração de apoio a qualquer facção em público. A neutralidade é sua maior proteção.",
-      "timestamp": "2026-05-14T23:12:56.793672"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "a\n- Na impossibilidade de transporte para unidade de saúde estruturada, utilize **Fossas Sépticas de Resíduos**.\n- O buraco deve ter profundidade mínima de 1,5 a 2 metros.\n- Cubra os resíduos depositados diariamente com uma camada de cal (se disponível) ou terra e cinzas (10-15 cm) para impedir acesso de animais e insetos.\n\n## 5. Prevenção e Controle de Infecções (PCI) e Triagem\nProcedimentos para o contato primário com indivíduos sintomáticos.\n\n### 5.1. Higiene das Mãos\n- **Com água e sabão (40-60 segundos):** Sempre que as mãos estiverem visivelmente sujas ou após contato com fluidos corporais.\n- **Fricção com álcool (20-30 segundos):** Para antissepsia rápida entre avaliações (concentração alcoólica entre 60% e 80%).\n\n### 5.2. Uso de EPI Básico\n- Utilização de luvas descartáveis de",
+      "timestamp": "2026-05-14T23:42:24.096816"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "## 5. Primeiros Socorros em Combate (TCCC - Conceitos Básicos)\n- **Controle de Hemorragias:** O uso de torniquetes é prioridade em ferimentos de extremidades causados por estilhaços ou disparos.\n- **Tratamento de Choque:** Mantenha a vítima aquecida e com as pernas elevadas, se não houver suspeita de trauma na coluna.\n- **Ferimentos Penetrantes no Tórax:** Devem ser selados o mais rápido possível para evitar colapso pulmonar (pneumotórax).",
-      "timestamp": "2026-05-14T23:12:56.793674"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "tração alcoólica entre 60% e 80%).\n\n### 5.2. Uso de EPI Básico\n- Utilização de luvas descartáveis de procedimento ao prever contato com sangue, fluidos corporais, secreções ou pele não intacta. \n- Troca de luvas entre procedimentos e higienização das mãos imediatamente após a remoção.\n- Uso de máscara cirúrgica caso haja risco de exposição a patógenos respiratórios durante a avaliação.\n\n### 5.3. Preparo de Soluções Cloradas para Desinfecção (Padrão OMS)\n- **Solução a 0,5% (Forte):** Utilizada para desinfecção de derramamentos de sangue, fluidos corporais, limpeza de necrotérios, cadáveres ou alas de isolamento de doenças altamente infecciosas (como Cólera ou febres hemorrágicas, como Ebola).\n- **Solução a 0,1% (Fraca):** Utilizada para a desinfecção rotineira de superfícies, chão, macas,",
+      "timestamp": "2026-05-14T23:42:24.096819"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "## 6. Direitos Internacionais\nLembre-se de que, segundo as Convenções de Genebra, civis não devem ser alvos diretos. Em caso de detenção, exija contato com a Cruz Vermelha Internacional.",
-      "timestamp": "2026-05-14T23:12:56.793675"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": ").\n- **Solução a 0,1% (Fraca):** Utilizada para a desinfecção rotineira de superfícies, chão, macas, equipamentos médicos e lavagem das mãos (apenas na ausência de água tratada e sabão).\n\n### 5.4. Critérios de Isolamento de Campo\n- Na suspeita de doenças altamente contagiosas (ex: sarampo, cólera, febres hemorrágicas), **isole imediatamente** o paciente do restante do grupo.\n- Estabeleça uma zona de contenção com demarcação física. Mantenha uma distância mínima de **1 a 2 metros** entre leitos de pacientes.\n- Restrinja o acesso à área isolada apenas à equipe de atendimento essencial, utilizando EPI completo e medidas rigorosas de PCI.\n- Pacientes com sintomas respiratórios transmissíveis devem usar máscara cirúrgica e permanecer em áreas abertas e bem ventiladas ou salas individuais.\n\n##",
+      "timestamp": "2026-05-14T23:42:24.096824"
     },
     {
-      "source": "seguranca_zona_guerra.md",
-      "text": "---\n*Atenção: Este manual fornece diretrizes gerais. Em cenários reais, as ordens de autoridades locais e organizações internacionais devem ser seguidas com prioridade.*",
-      "timestamp": "2026-05-14T23:12:56.793676"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "evem usar máscara cirúrgica e permanecer em áreas abertas e bem ventiladas ou salas individuais.\n\n## 6. Manejo Clínico Primário em Áreas Remotas\n\n### 6.1. Terapia de Reidratação Oral (TRO) para Desidratação\nA desidratação severa (frequentemente causada por diarreia ou cólera) é uma emergência crítica. A TRO é o tratamento de primeira linha estabelecido pela OMS.\n- **Sais de Reidratação Oral (SRO):** Dissolva 1 pacote padrão de SRO da OMS em exatamente 1 litro de água tratada (fervida ou clorada).\n- **Soro Caseiro (Alternativa de Emergência):** Em 1 litro de água tratada, misture **6 colheres de chá rasas de açúcar** e **1/2 colher de chá rasa de sal**. Mexa até dissolver completamente.\n- **Dosagem e Administração:** Ofereça o líquido de forma lenta e contínua. \n  - *Menores de 2 anos:* 50",
+      "timestamp": "2026-05-14T23:42:24.096827"
     },
     {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "# Protocolo de Emergência e Sobrevivência em Ambiente de Selva",
-      "timestamp": "2026-05-14T23:12:56.793693"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "Dosagem e Administração:** Ofereça o líquido de forma lenta e contínua. \n  - *Menores de 2 anos:* 50 a 100 ml após cada evacuação líquida.\n  - *Crianças de 2 a 10 anos:* 100 a 200 ml após cada evacuação líquida.\n  - *Crianças maiores e Adultos:* O quanto aceitarem (geralmente de 200 a 400 ml após cada episódio). \n  - *Nota:* Em caso de vômito, aguarde 10 minutos e recomece a oferecer o soro em pequenos goles.\n\n### 6.2. Protocolos Pós-Exposição Críticos\n- **Mordeduras de Animais (Risco de Raiva):** O protocolo de Primeiros Socorros mais eficaz para inativar o vírus da raiva é a lavagem imediata da lesão. Lave a ferida vigorosamente com água abundante e sabão (ou detergente) por **no mínimo 15 minutos contínuos**. Após a lavagem profunda, aplique um antisséptico (povidona-iodo ou álcool a",
+      "timestamp": "2026-05-14T23:42:24.096831"
     },
     {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "Este guia estabelece os procedimentos prioritários para situações de emergência em ambientes de selva e florestas tropicais, focando na manutenção da vida e facilitação do resgate.",
-      "timestamp": "2026-05-14T23:12:56.793695"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "15 minutos contínuos**. Após a lavagem profunda, aplique um antisséptico (povidona-iodo ou álcool a 70%). Não faça sutura primária. Evacue o paciente para receber a Profilaxia Pós-Exposição (vacina/soro) o mais rápido possível.\n- **Acidentes Ofídicos (Picadas de Cobra):** \n  - Acalme a vítima (a ansiedade acelera a frequência cardíaca e a disseminação linfática do veneno).\n  - Mantenha o paciente deitado e em repouso absoluto.\n  - **Imobilize** rigorosamente o membro afetado com uma tala ou tipoia, mantendo-o na altura do coração ou levemente elevado.\n  - **NÃO FAÇA:** Nunca aplique torniquetes, não faça cortes no local da picada, não tente sugar o veneno com a boca e não aplique gelo, álcool ou pomadas caseiras.\n  - Providencie o transporte imediato e seguro para um centro médico com",
+      "timestamp": "2026-05-14T23:42:24.096834"
     },
     {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "## 1. Prioridades de Sobrevivência (Regra dos 3)\nEm uma emergência na selva, a gestão de recursos deve seguir esta ordem de prioridade:\n1. **Manter a Calma:** O pânico gasta energia e leva a decisões erradas.\n2. **Abrigo:** Proteção contra chuva, sol e insetos (ameaças imediatas).\n3. **Água:** Hidratação é crítica em climas úmidos e quentes.\n4. **Fogo:** Sinalização, purificação de água e proteção.\n5. **Comida:** O ser humano sobrevive semanas sem comer; não se arrisque com plantas desconhecidas.",
-      "timestamp": "2026-05-14T23:12:56.793697"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "álcool ou pomadas caseiras.\n  - Providencie o transporte imediato e seguro para um centro médico com soro antiofídico.\n\n## 7. Primeiros Cuidados Psicológicos (PCP)\nEm contextos de desastres, surtos ou violência em áreas remotas, o apoio psicossocial imediato previne traumas a longo prazo. A OMS estabelece o protocolo de ação \"**Observar, Escutar e Conectar**\".\n\n- **Preparar:** Antes de intervir, compreenda o contexto da crise, avalie os serviços de apoio disponíveis e identifique as rotas e questões de segurança.\n- **Observar (Look):** Analise rapidamente o ambiente em busca de riscos iminentes à vida. Identifique pessoas com necessidades físicas urgentes (frio extremo, fome, hemorragias) e indivíduos com reações de angústia grave (pessoas paralisadas, desorientadas ou chorando",
+      "timestamp": "2026-05-14T23:42:24.096837"
     },
     {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "## 2. Procedimento de Emergência S.T.O.P.\nAo perceber que está perdido ou em perigo:\n- **S (Sit):** Sente-se.\n- **T (Think):** Pense. Analise as opções e os recursos disponíveis.\n- **O (Observe):** Observe o terreno, perigos imediatos e pontos de referência.\n- **P (Plan):** Planeje as próximas ações. Não se mova sem um plano.",
-      "timestamp": "2026-05-14T23:12:56.793698"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "orragias) e indivíduos com reações de angústia grave (pessoas paralisadas, desorientadas ou chorando incontrolavelmente).\n- **Escutar (Listen):** Aproxime-se das pessoas angustiadas de maneira calma e não invasiva. Pergunte sobre suas necessidades primárias e preocupações imediatas. Ouça ativamente sem pressionar a pessoa a relatar o trauma. Valide seus sentimentos e ajude-a a se sentir segura.\n- **Conectar (Link):** Auxilie as pessoas a atenderem suas necessidades fisiológicas básicas (água, comida, abrigo). Forneça informações reais e precisas sobre a situação atual, combatendo rumores. Conecte as vítimas com seus familiares, comunidades de apoio e serviços de emergência disponíveis.\n\n---\n*Documento estruturado para integração em sistemas de IA embarcada e bancos de dados vetoriais",
+      "timestamp": "2026-05-14T23:42:24.096840"
     },
     {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "## 3. Construção de Abrigo\nO abrigo deve ser construído antes do anoitecer:\n- **Localização:** Terreno elevado, seco e longe de árvores mortas (risco de queda de galhos).\n- **Isolamento:** Nunca durma diretamente no chão. Use uma camada de folhas secas ou troncos.\n- **Cobertura:** Use folhas de palmeira ou grandes folhagens sobrepostas como telhas para drenar a água da chuva.",
-      "timestamp": "2026-05-14T23:12:56.793699"
-    },
-    {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "## 4. Água e Hidratação\n- **Fontes Seguras:** Água da chuva (coletada em folhas), cipós (água de cipó-alho ou escada-de-jabuti) e bambus.\n- **Tratamento:** Ferva a água por pelo menos 5-10 minutos ou use pastilhas de cloro/iodo.\n- **Evite:** Água parada ou com cheiro forte, a menos que seja a última opção após tratamento rigoroso.",
-      "timestamp": "2026-05-14T23:12:56.793701"
-    },
-    {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "## 5. Sinalização para Resgate\n- **Visual:** Limpe uma área aberta e crie sinais visíveis do céu (triângulos ou \"X\").\n- **Fumaça:** Mantenha uma fogueira pronta. Use folhas verdes para produzir fumaça branca e densa se ouvir aeronaves.\n- **Som:** Use apitos ou batidas rítmicas em troncos ocos (três sinais curtos e repetidos é o padrão internacional de SOS).",
-      "timestamp": "2026-05-14T23:12:56.793702"
-    },
-    {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "## 6. Perigos Biológicos e Primeiros Socorros\n- **Animais Peçonhentos:** Sacuda roupas e calçados. Mantenha as extremidades cobertas.\n- **Picadas de Cobra:** Mantenha a vítima calma, imobilize o membro e transporte para auxílio médico. **Não** faça cortes ou sucção.\n- **Plantas:** Se não conhece, não toque nem coma. Evite plantas com seiva leitosa.",
-      "timestamp": "2026-05-14T23:12:56.793704"
-    },
-    {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "## 7. Navegação Básica\n- Se não houver bússola, utilize o sol (nasce no Leste, põe-se no Oeste).\n- Siga o fluxo de pequenos riachos; eles geralmente levam a rios maiores e, consequentemente, à civilização.",
-      "timestamp": "2026-05-14T23:12:56.793705"
-    },
-    {
-      "source": "procedimentos_emergencia_selva.md",
-      "text": "---\n*Este documento é um guia de referência rápida. O treinamento prático é indispensável.*",
-      "timestamp": "2026-05-14T23:12:56.793707"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "# Plano de Resposta a Emergências e Primeiros Socorros",
-      "timestamp": "2026-05-14T23:12:56.793721"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "Este documento estabelece as diretrizes fundamentais para procedimentos de emergência no ambiente de trabalho, visando a preservação da vida, a mitigação de danos e a proteção do patrimônio, em conformidade com as Normas Regulamentadoras (NRs).",
-      "timestamp": "2026-05-14T23:12:56.793723"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "## 1. Classificação de Emergências\nAs emergências podem ser classificadas de acordo com sua natureza:\n- **Incêndios:** Explosões ou focos de fogo.\n- **Acidentes Pessoais:** Quedas, cortes, choques elétricos ou intoxicações.\n- **Vazamentos Químicos:** Liberação não controlada de substâncias tóxicas ou inflamáveis.\n- **Desastres Naturais:** Inundações, vendavais ou sismos.",
-      "timestamp": "2026-05-14T23:12:56.793724"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "## 2. Procedimento Operacional Padrão (POP)",
-      "timestamp": "2026-05-14T23:12:56.793726"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "### A. Alerta e Notificação\nAo identificar uma situação de risco iminente:\n1.  **Acionar o Alarme:** Utilize o botoeira mais próxima.\n2.  **Comunicar a Brigada:** Informe o local exato e o tipo de ocorrência.\n3.  **Ligar para Serviços Externos:**\n    - **Bombeiros:** 193\n    - **SAMU:** 192\n    - **Polícia:** 190",
-      "timestamp": "2026-05-14T23:12:56.793727"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "### B. Abandono de Área\n1.  Mantenha a calma e interrompa suas atividades imediatamente.\n2.  Desligue equipamentos elétricos e feche válvulas de gás, se seguro.\n3.  Caminhe em fila indiana, sem correr, pelas rotas de fuga sinalizadas.\n4.  **Não utilize elevadores.**\n5.  Dirija-se ao **Ponto de Encontro** designado e aguarde a contagem da equipe de segurança.",
-      "timestamp": "2026-05-14T23:12:56.793729"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "## 3. Combate a Princípio de Incêndio\nO uso de extintores deve respeitar a classe do fogo:\n- **Classe A (Sólidos - papel, madeira):** Extintor de Água ou PQS.\n- **Classe B (Líquidos Inflamáveis):** Extintor de CO2 ou PQS.\n- **Classe C (Equipamentos Elétricos):** Extintor de CO2 ou PQS (Nunca use água).\n- **Classe D (Metais Piróforicos):** Extintor de Pó Especial.",
-      "timestamp": "2026-05-14T23:12:56.793730"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "## 4. Primeiros Socorros Básicos",
-      "timestamp": "2026-05-14T23:12:56.793732"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "### Parada Cardiorrespiratória (PCR)\n1.  Verifique a consciência e a respiração.\n2.  Solicite um DEA (Desfibrilador Externo Automático).\n3.  Inicie compressões torácicas: 100 a 120 compressões por minuto no centro do tórax.",
-      "timestamp": "2026-05-14T23:12:56.793733"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "### Hemorragias\n1.  Aplique pressão direta sobre o ferimento com pano limpo.\n2.  Mantenha o membro elevado, se possível.",
-      "timestamp": "2026-05-14T23:12:56.793734"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "### Queimaduras\n1.  Lave com água corrente em temperatura ambiente.\n2.  Não aplique substâncias (pomadas, manteiga, gelo).\n3.  Cubra com gaze estéril ou pano limpo umedecido.",
-      "timestamp": "2026-05-14T23:12:56.793736"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "## 5. Responsabilidades\n- **Colaboradores:** Conhecer as rotas de fuga e participar dos simulados.\n- **Brigadistas:** Orientar a evacuação e realizar o combate inicial.\n- **Segurança do Trabalho:** Manter equipamentos inspecionados e planos atualizados.",
-      "timestamp": "2026-05-14T23:12:56.793737"
-    },
-    {
-      "source": "procedimentos_emergencia_seguranca.md",
-      "text": "---\n*Documento revisado em: Maio de 2026*",
-      "timestamp": "2026-05-14T23:12:56.793739"
+      "source": "biosseguranca_areas_remotas_oms.md",
+      "text": "---\n*Documento estruturado para integração em sistemas de IA embarcada e bancos de dados vetoriais (RAG). Atualizado com diretrizes completas de biossegurança, parâmetros de cloro, manejo clínico de campo (TRO e PEP) e Primeiros Cuidados Psicológicos (PCP) estritamente baseados nos manuais da Organização Mundial da Saúde (OMS).*",
+      "timestamp": "2026-05-14T23:42:24.096843"
     }
   ]
 }
