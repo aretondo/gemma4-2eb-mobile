@@ -56,7 +56,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun fetchSystemPrompts() {
         viewModelScope.launch(Dispatchers.IO) {
-            promptManager.fetchPrompts("192.168.68.102")
+            promptManager.fetchPrompts("192.168.68.103")
         }
     }
 
@@ -64,6 +64,21 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         currentDocumentId = null
         _messages.value = emptyList()
         _state.value = ChatState.Idle
+        
+        // Refresh native conversation to clear any leaked memory/state in liblitertlm
+        inferenceManager.recreateConversation()
+
+        // Clear persistent memory file to stop the model from "copying" previous Portuguese responses
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val memoryFile = java.io.File(getApplication<Application>().getExternalFilesDir(null), "recent_memory.json")
+                if (memoryFile.exists()) {
+                    memoryFile.delete()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Error clearing memory", e)
+            }
+        }
     }
 
     private fun updateCurrentDocumentMessages() {
@@ -163,17 +178,17 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         _state.value = ChatState.Generating
 
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 // --- ETAPA 1: Intent Parsing com Gemma ---
                 val intentPrompt = """
-                    Classifique a intenção do usuário em apenas UMA palavra:
-                    - 'READY' (se ele quer finalizar, salvar ou diz que está pronto/ok)
-                    - 'PENDING' (se ele quer mudar, corrigir ou anotar algo novo)
-                    - 'QUERY' (se for uma pergunta ou dúvida técnica)
+                    Classify the user's intent in exactly ONE word:
+                    - 'READY' (if they want to finalize, save, or say it's done/ok)
+                    - 'PENDING' (if they want to change, correct, or add something new)
+                    - 'QUERY' (if it's a technical question or doubt)
                     
-                    Mensagem: "$text"
-                    Intenção:
+                    Message: "$text"
+                    Intent:
                 """.trimIndent()
                 
                 var intentResponse = ""
@@ -196,29 +211,32 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 // Fluxo Normal (RAG + Resposta Técnica)
                 val relevantChunks = knowledgeManager.findRelevantChunks(text)
                 val ragContext = if (relevantChunks.isNotEmpty()) {
-                    "\n[DADOS DE REFERÊNCIA TÉCNICA]:\n" + 
-                    relevantChunks.joinToString("\n\n") { "Fonte: ${it.source}\nConteúdo: ${it.text}" }
+                    "\n[TECHNICAL REFERENCE DATA]:\n" + 
+                    relevantChunks.joinToString("\n\n") { "Source: ${it.source}\nContent: ${it.text}" }
                 } else ""
 
                 var docContextString = ""
                 currentDocumentId?.let { docId ->
                     val doc = documentManager.getDocuments().find { it.id == docId }
                     if (doc != null && doc.context.isNotBlank()) {
-                        docContextString = "\n[CONTEÚDO DO ARQUIVO ATUAL]:\n" + doc.context
+                        docContextString = "\n[CURRENT FILE CONTENT]:\n" + doc.context
                     }
                 }
 
                 val conversationHistory = _messages.value.takeLast(6).joinToString("\n") { 
-                    (if (it.isUser) "Usuário: " else "Gemma: ") + it.text 
+                    (if (it.isUser) "User: " else "Gemma: ") + it.text 
                 }
 
                 val finalPrompt = """
                     ${promptManager.getChatPrompt()}
                     $ragContext
                     $docContextString
-                    Histórico: $conversationHistory
-                    Pergunta: $text
-                    Resposta Direta:
+                    
+                    Conversation History:
+                    $conversationHistory
+                    
+                    User: $text
+                    Gemma:
                 """.trimIndent()
 
                 processGemmaResponse(finalPrompt, relevantChunks.map { it.source }.distinct())
@@ -300,9 +318,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         
         refreshDocuments()
 
-        val statusText = if (extractedText.isNotBlank()) "Metadados extraídos" else "Imagem capturada (sem texto detectado)"
-        val prefix = if (isExistingDoc) "➕ Nova Imagem no Doc" else "📄 Documento Digitalizado"
-        val textToUser = "$prefix (ID: $docId)\n[$statusText e enviado ao Gemma]"
+        val statusText = if (extractedText.isNotBlank()) "Metadata extracted" else "Image captured (no text detected)"
+        val prefix = if (isExistingDoc) "➕ New Image in Doc" else "📄 Document Digitized"
+        val textToUser = "$prefix (ID: $docId)\n[$statusText and sent to Gemma]"
         
         val currentMessages = _messages.value.toMutableList()
         currentMessages.add(ChatMessage(textToUser, true, imagePath = imagePath, documentId = docId))
@@ -313,12 +331,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
         val systemPrompt = promptManager.getOcrPrompt()
         val finalPrompt = if (extractedText.isNotBlank()) {
-            "$systemPrompt\n\n[TEXTO BRUTO DO OCR]:\n$extractedText"
+            "$systemPrompt\n\n[RAW OCR TEXT]:\n$extractedText"
         } else {
-            "$systemPrompt\n\n[ALERTA: O OCR não detectou texto nesta imagem]"
+            "$systemPrompt\n\n[ALERT: OCR did not detect text in this image]"
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 android.util.Log.d("ChatViewModel", "Starting AI response for document")
                 var firstToken = true
@@ -366,12 +384,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         _messages.value = doc.messages
         
         if (_messages.value.isEmpty()) {
-            val systemMessage = "Usando contexto do Documento ID: $docId"
+            val systemMessage = "Using context from Document ID: $docId"
             val currentMessages = mutableListOf<ChatMessage>()
             currentMessages.add(ChatMessage(systemMessage, true, imagePath = doc.imagePaths.firstOrNull(), documentId = docId))
             _messages.value = currentMessages
             updateCurrentDocumentMessages()
-            sendMessage("Quero revisar o documento $docId. O que falta para enviarmos para o sync?")
+            sendMessage("I want to review document $docId. What is missing to sync it?")
         }
     }
 
@@ -388,7 +406,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         refreshDocuments()
     }
 
-    fun syncData(serverIp: String = "192.168.68.102") {
+    fun syncData(serverIp: String = "192.168.68.103") {
         viewModelScope.launch(Dispatchers.IO) {
             // Atualizar Base de Conhecimento
             knowledgeManager.syncKnowledge(serverIp)
@@ -418,9 +436,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         updateDocument(doc.copy(status = status))
         
         val response = if (status == "READY") {
-            "Entendido. Marquei este documento como **PRONTO** para sincronização."
+            "Understood. I have marked this document as **READY** for sync."
         } else {
-            "Alterado para **PENDENTE**. O que mais precisamos ajustar?"
+            "Changed to **PENDING**. What else do we need to adjust?"
         }
         
         val currentMessages = _messages.value.toMutableList()
@@ -490,5 +508,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 android.util.Log.e("ChatViewModel", "Error loading memory", e)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        inferenceManager.close()
     }
 }

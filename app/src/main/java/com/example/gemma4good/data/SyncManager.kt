@@ -19,7 +19,7 @@ class SyncManager(private val context: Context) {
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     
     // IP da sua máquina local
-    private var serverIp = "192.168.68.102"
+    private var serverIp = "192.168.68.103"
 
     fun setServerIp(ip: String) {
         serverIp = ip

@@ -28,13 +28,13 @@ KNOWLEDGE_FILE = BASE_DIR / "knowledge.json"
 SYNC_DIR.mkdir(exist_ok=True)
 IMAGES_DIR.mkdir(exist_ok=True)
 
-# Garante que prompts.json existe com prompts de alta performance (Versão Final)
+# Ensure prompts.json exists with high-performance English prompts (Final Version)
 def ensure_default_prompts():
     default_data = {
-        "chat_system_prompt": "Você é a 'Gemma Scan Assistant', especialista em saúde. Sua missão é responder perguntas técnicas usando os dados de referência e manter um resumo clínico atualizado. Seja objetiva, técnica e direta. Não explique seu raciocínio.",
-        "ocr_system_prompt": "Analise o OCR e extraia: Nome do Paciente, Medicamentos (Nome e Dosagem) e Diagnósticos. Combine informações de fotos anteriores se existirem. Seja breve e estruturada."
+        "chat_system_prompt": "You are 'Gemma Scan Assistant', an AI technical specialist. Your mission is to answer technical questions using the provided reference data and maintain an updated summary in the context field. Be objective, technical, and direct. Do not explain your reasoning.",
+        "ocr_system_prompt": "Analyze the OCR text and extract technical parameters, values and instructions. Be brief and structured."
     }
-    # Forçamos a criação/sobrescrita para garantir a versão final
+    # Force creation/overwrite to ensure the final English version
     PROMPT_FILE.write_text(json.dumps(default_data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 ensure_default_prompts()
@@ -43,7 +43,7 @@ ensure_default_prompts()
 app = FastAPI(
     title="Gemma4Good Backend API",
     version="1.1.0",
-    description="Sync sink e gerenciador de prompts para o app Gemma4Good."
+    description="Sync sink and prompt manager for the Gemma4Good app."
 )
 
 app.add_middleware(
@@ -83,17 +83,17 @@ def health():
 
 @app.post("/sync", status_code=201)
 def receive_document(doc: DocumentState):
-    """Recebe um DocumentState JSON com imagens em Base64 e persiste."""
+    """Receives a DocumentState JSON with Base64 images and persists it."""
     doc_id = doc.id or f"doc_{uuid.uuid4().hex[:8]}"
     doc_dict = doc.model_dump()
     doc_dict["id"] = doc_id
     doc_dict["received_at"] = datetime.utcnow().isoformat()
     
-    # Processar array de imagens
+    # Process array of images
     saved_image_paths = []
     for i, b64_str in enumerate(doc.images):
         try:
-            # Remove header data:image/jpeg;base64, se existir
+            # Remove header data:image/jpeg;base64, if exists
             if "," in b64_str:
                 b64_str = b64_str.split(",")[1]
             
@@ -103,11 +103,11 @@ def receive_document(doc: DocumentState):
             img_path.write_bytes(img_data)
             saved_image_paths.append(str(img_path.relative_to(BASE_DIR)))
         except Exception as e:
-            print(f"Erro ao processar imagem {i}: {e}")
+            print(f"Error processing image {i}: {e}")
 
-    # Atualiza o dicionário com os caminhos locais dos arquivos salvos (opcional, para UI)
+    # Update dictionary with local paths (optional, for UI)
     doc_dict["saved_images"] = saved_image_paths
-    # Remove as strings base64 gigantes antes de salvar o JSON para não explodir o tamanho
+    # Remove giant base64 strings before saving JSON
     doc_dict.pop("images", None)
 
     dest = SYNC_DIR / f"{doc_id}.json"
@@ -118,7 +118,7 @@ def receive_document(doc: DocumentState):
 
 @app.get("/sync")
 def list_documents():
-    """Lista todos os documentos sincronizados."""
+    """Lists all synced documents."""
     docs = []
     for f in sorted(SYNC_DIR.glob("*.json")):
         try:

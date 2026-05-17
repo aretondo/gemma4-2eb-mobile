@@ -1,6 +1,6 @@
 """
 Gemma4Good – Streamlit UI
-Gerencia documentos sincronizados e configuração de prompts do sistema.
+Manages synced documents and system prompt configurations.
 """
 
 from __future__ import annotations
@@ -105,8 +105,8 @@ def load_prompts() -> dict:
     except:
         pass
     return {
-        "chat_system_prompt": "Você é a 'Gemma Scan Assistant'. RESPONDA DIRETAMENTE à pergunta do usuário usando o contexto técnico fornecido. NÃO faça meta-análise e NÃO explique seu raciocínio.",
-        "ocr_system_prompt": "Extraia dados do OCR. Seja técnica."
+        "chat_system_prompt": "You are 'Gemma Scan Assistant'. DIRECTLY ANSWER the user's question using the provided technical context. Do not make meta-analyses or explain your reasoning.",
+        "ocr_system_prompt": "Extract data from OCR. Be technical."
     }
 
 def save_prompts(data: dict) -> None:
@@ -139,17 +139,17 @@ def badge(status: str) -> str:
     return f'<span class="badge-error">❌ {s}</span>'
 
 def guess_doc_type(doc: dict) -> str:
-    """Infere o tipo de documento pelo texto extraído ou contexto."""
-    text = (doc.get("extractedText", "") or "").lower()
+    """Infers document type from extracted text or context."""
+    text = (doc.get("extracted_text", "") or "").lower()
     ctx  = (doc.get("context", "") or "").lower()
     combined = text + ctx
-    if any(k in combined for k in ["hemograma", "leucócitos", "plaquetas", "hematócrito", "exame"]):
-        return "Exame"
-    if any(k in combined for k in ["receita", "mg", "comprimido", "dose", "prescri"]):
-        return "Receita"
-    if any(k in combined for k in ["laudo", "patologia", "histopatol", "anatomia"]):
-        return "Laudo"
-    return "Outro"
+    if any(k in combined for k in ["blood count", "hemogram", "leukocytes", "platelets", "hematocrit", "exam", "test"]):
+        return "Exam"
+    if any(k in combined for k in ["prescription", "mg", "tablet", "dose", "prescri"]):
+        return "Prescription"
+    if any(k in combined for k in ["report", "pathology", "histopathol", "anatomy", "laudo"]):
+        return "Report"
+    return "Other"
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -167,15 +167,15 @@ with st.sidebar:
 
     docs_all = load_docs()
     total   = len(docs_all)
-    pending = sum(1 for d in docs_all if d.get("syncStatus", "").upper() == "PENDING")
-    ready   = sum(1 for d in docs_all if d.get("syncStatus", "").upper() == "READY")
-    synced  = sum(1 for d in docs_all if d.get("syncStatus", "").upper() in ("SYNCED", "DONE"))
+    pending = sum(1 for d in docs_all if d.get("status", "").upper() == "PENDING")
+    ready   = sum(1 for d in docs_all if d.get("status", "").upper() == "READY")
+    synced  = sum(1 for d in docs_all if d.get("status", "").upper() in ("SYNCED", "DONE"))
 
     col1, col2 = st.columns(2)
     col1.metric("Total", total)
-    col2.metric("Pendentes", pending)
-    col1.metric("Prontos", ready)
-    col2.metric("Sincronizados", synced)
+    col2.metric("Pending", pending)
+    col1.metric("Ready", ready)
+    col2.metric("Synced", synced)
 
     st.markdown("---")
     st.caption("Gemma4Good Backend v2.0")
@@ -183,83 +183,83 @@ with st.sidebar:
 
 # ── Conteúdo principal ────────────────────────────────────────────────────────
 st.markdown("# 🏥 Gemma4Good Backend")
-st.markdown("Central de comando: recebe documentos do app, gerencia prompts e visualiza dados triados.")
+st.markdown("Command center: receives documents from the app, manages prompts, and visualizes screened data.")
 st.markdown("---")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Documentos Sincronizados", "⚙️ Configuração de Prompts", "📚 Knowledge Base", "🔌 API & Integração"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Synced Documents", "⚙️ Prompt Configuration", "📚 Knowledge Base", "🔌 API & Integration"])
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 1 – Documentos
+# TAB 1 – Documents
 # ══════════════════════════════════════════════════════════════════════════════
 with tab1:
     col_h1, col_h2 = st.columns([3, 1])
     with col_h1:
-        st.subheader("Documentos Recebidos")
+        st.subheader("Received Documents")
     with col_h2:
-        if st.button("🔄 Atualizar", key="refresh_docs"):
+        if st.button("🔄 Refresh", key="refresh_docs"):
             st.rerun()
 
     docs = load_docs()
 
     if not docs:
-        st.info("📭 Nenhum documento sincronizado ainda. Aguardando dados do app Android.", icon="ℹ️")
+        st.info("📭 No documents synced yet. Waiting for data from the Android app.", icon="ℹ️")
     else:
-        # ── Filtros laterais ──────────────────────────────────────────────────
+        # ── Filters ───────────────────────────────────────────────────────────
         filter_col1, filter_col2 = st.columns(2)
 
         with filter_col1:
             status_filter = st.selectbox(
-                "Filtrar por status",
-                ["Todos", "PENDING", "READY", "SYNCED"],
+                "Filter by status",
+                ["All", "PENDING", "READY", "SYNCED"],
                 key="status_filter"
             )
 
-        # Enriquece docs com tipo inferido
+        # Enrich docs with guessed type
         for d in docs:
             d["_doc_type"] = guess_doc_type(d)
 
-        tipos_disponiveis = sorted(set(d["_doc_type"] for d in docs))
+        available_types = sorted(set(d["_doc_type"] for d in docs))
         with filter_col2:
             tipo_filter = st.selectbox(
-                "Filtrar por tipo",
-                ["Todos"] + tipos_disponiveis,
+                "Filter by type",
+                ["All"] + available_types,
                 key="tipo_filter"
             )
 
-        # Aplica filtros
+        # Apply filters
         filtered = docs
-        if status_filter != "Todos":
-            filtered = [d for d in filtered if d.get("syncStatus", "").upper() == status_filter]
-        if tipo_filter != "Todos":
+        if status_filter != "All":
+            filtered = [d for d in filtered if d.get("status", "").upper() == status_filter]
+        if tipo_filter != "All":
             filtered = [d for d in filtered if d["_doc_type"] == tipo_filter]
 
-        st.caption(f"Exibindo **{len(filtered)}** de **{len(docs)}** documentos")
+        st.caption(f"Showing **{len(filtered)}** of **{len(docs)}** documents")
         st.markdown("---")
 
         for doc in filtered:
             doc_id   = doc.get("id", "Unknown")
-            status   = doc.get("syncStatus", "PENDING")
+            status   = doc.get("status", "PENDING")
             recv_at  = doc.get("received_at", "—")
-            doc_type = doc.get("_doc_type", "Outro")
-            txt_prev = (doc.get("extractedText", "") or "")[:120]
+            doc_type = doc.get("_doc_type", "Other")
+            txt_prev = (doc.get("extracted_text", "") or "")[:120]
 
             label = f"📄 {doc_id}  ·  {doc_type}"
             with st.expander(label, expanded=False):
                 cols = st.columns([2, 2, 1, 1])
                 cols[0].markdown(f"**ID:** `{doc_id}`")
-                cols[1].markdown(f"**Recebido:** {recv_at}")
-                cols[2].markdown(f"**Tipo:** {doc_type}")
+                cols[1].markdown(f"**Received:** {recv_at}")
+                cols[2].markdown(f"**Type:** {doc_type}")
                 cols[3].markdown(badge(status), unsafe_allow_html=True)
 
                 if txt_prev:
-                    st.markdown("**Prévia do texto OCR:**")
+                    st.markdown("**OCR text preview:**")
                     st.code(
-                        txt_prev + ("..." if len(doc.get("extractedText", "")) > 120 else ""),
+                        txt_prev + ("..." if len(doc.get("extracted_text", "")) > 120 else ""),
                         language="text"
                     )
 
                 if doc.get("context"):
-                    st.markdown("**Contexto da conversa (inclui tags processadas):**")
+                    st.markdown("**Chat context (including processed tags):**")
                     st.text_area(
                         label="context",
                         value=doc["context"],
@@ -269,39 +269,37 @@ with tab1:
                         label_visibility="collapsed"
                     )
                 
-                # Exibição das imagens recebidas
+                # Display received images
                 saved_images = doc.get("saved_images", [])
                 if saved_images:
-                    st.markdown(f"**Imagens capturadas ({len(saved_images)}):**")
+                    st.markdown(f"**Captured images ({len(saved_images)}):**")
                     img_cols = st.columns(min(len(saved_images), 4))
                     for idx, img_rel_path in enumerate(saved_images):
                         with img_cols[idx % 4]:
-                            # O Streamlit pode servir arquivos locais se o caminho for relativo ou via st.image
                             img_abs_path = BASE_DIR / img_rel_path
                             if img_abs_path.exists():
                                 st.image(str(img_abs_path), use_container_width=True)
 
 
-                with st.expander("🔍 JSON completo"):
+                with st.expander("🔍 Full JSON"):
                     st.json(doc)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 2 – Prompts
 # ══════════════════════════════════════════════════════════════════════════════
 with tab2:
-    st.subheader("⚙️ Configuração de Prompts do Sistema")
+    st.subheader("⚙️ System Prompt Configuration")
     st.markdown(
-        "Estes prompts são baixados pelo app Android no startup. "
-        "Edite aqui e salve — na próxima sincronização o app usará os novos valores."
+        "These prompts are downloaded by the Android app at startup. "
+        "Edit here and save — the app will use the new values on the next sync."
     )
 
-    # Aviso sobre a tag SET_STATUS
     st.markdown("""
 <div class="tip-box">
     💡 <strong>Gemma Tool Use (Tag [SET_STATUS])</strong><br>
-    O app intercepta a tag <code>[SET_STATUS:READY]</code> ou <code>[SET_STATUS:PENDING]</code> nas respostas do Gemma
-    e atualiza o banco de dados local silenciosamente — a tag nunca é exibida ao usuário.<br>
-    Certifique-se de que seus prompts incluam a instrução de uso desta tag (o botão abaixo insere automaticamente).
+    The app intercepts the <code>[SET_STATUS:READY]</code> or <code>[SET_STATUS:PENDING]</code> tags in Gemma's responses
+    and updates the local database silently — the tag is never displayed to the user.<br>
+    The app now uses an Intent Parser to handle these, but keeping them in instructions helps the LLM understand state.
 </div>
 """, unsafe_allow_html=True)
 
@@ -313,7 +311,7 @@ with tab2:
 
     with col_p1:
         st.markdown("### 💬 Chat System Prompt")
-        st.caption("Instrução para o chat livre com o profissional de saúde.")
+        st.caption("Instructions for free chat with the healthcare professional.")
         chat_p = st.text_area(
             label="chat_system_prompt",
             value=prompts.get("chat_system_prompt", ""),
@@ -321,15 +319,11 @@ with tab2:
             key="chat_prompt_area",
             label_visibility="collapsed",
         )
-        st.caption(f"📏 {len(chat_p)} caracteres")
-        if st.button("➕ Injetar instrução SET_STATUS", key="inject_chat"):
-            if "[SET_STATUS" not in chat_p:
-                chat_p = chat_p.rstrip() + SET_STATUS_TAG_INSTRUCTION
-            st.rerun()
+        st.caption(f"📏 {len(chat_p)} characters")
 
     with col_p2:
         st.markdown("### 📷 OCR System Prompt")
-        st.caption("Instrução para análise de documentos digitalizados via OCR.")
+        st.caption("Instructions for analyzing documents scanned via OCR.")
         ocr_p = st.text_area(
             label="ocr_system_prompt",
             value=prompts.get("ocr_system_prompt", ""),
@@ -337,18 +331,14 @@ with tab2:
             key="ocr_prompt_area",
             label_visibility="collapsed",
         )
-        st.caption(f"📏 {len(ocr_p)} caracteres")
-        if st.button("➕ Injetar instrução SET_STATUS", key="inject_ocr"):
-            if "[SET_STATUS" not in ocr_p:
-                ocr_p = ocr_p.rstrip() + SET_STATUS_TAG_INSTRUCTION
-            st.rerun()
+        st.caption(f"📏 {len(ocr_p)} characters")
 
     st.markdown("---")
 
     col_save, col_reset, _ = st.columns([1, 1, 4])
 
     with col_save:
-        if st.button("💾 Salvar Prompts", type="primary", key="save_prompts"):
+        if st.button("💾 Save Prompts", type="primary", key="save_prompts"):
             save_prompts({"chat_system_prompt": chat_p, "ocr_system_prompt": ocr_p})
             try:
                 httpx.post(
@@ -358,10 +348,10 @@ with tab2:
                 )
             except Exception:
                 pass
-            st.success("✅ Prompts salvos! O app buscará os novos valores no próximo sync.")
+            st.success("✅ Prompts saved! The app will fetch the new values in the next sync.")
 
     with col_reset:
-        if st.button("↩️ Resetar", key="reset_prompts"):
+        if st.button("↩️ Reset", key="reset_prompts"):
             st.rerun()
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -370,18 +360,18 @@ with tab2:
 with tab3:
     st.subheader("📚 Knowledge Base (Local RAG)")
     st.markdown(
-        "Faça upload de arquivos `.txt` ou `.md` para criar uma base de conhecimento offline. "
-        "O app Android baixará estes dados no Sync para responder perguntas técnicas."
+        "Upload `.txt` or `.md` files to create an offline knowledge base. "
+        "The Android app will download this data during Sync to answer technical questions."
     )
 
     uploaded_files = st.file_uploader(
-        "Adicionar documentos à base (.txt, .md)",
+        "Add documents to the base (.txt, .md)",
         type=["txt", "md"],
         accept_multiple_files=True
     )
 
     if uploaded_files:
-        if st.button("🏗️ Processar e Indexar Base"):
+        if st.button("🏗️ Process and Index Base"):
             all_chunks = []
             chunk_size = 800
             overlap = 100
@@ -395,7 +385,6 @@ with tab3:
                     end = start + chunk_size
                     chunk_text = text[start:end]
 
-                    # Tenta não cortar palavras no meio
                     if end < len(text):
                         last_space = chunk_text.rfind(' ')
                         if last_space != -1:
@@ -414,47 +403,48 @@ with tab3:
 
             # Salva no arquivo knowledge.json
             KNOWLEDGE_FILE.write_text(json.dumps({"chunks": all_chunks}, ensure_ascii=False, indent=2), encoding="utf-8")
-            st.success(f"✅ Base processada com {len(all_chunks)} trechos. O app baixará no próximo Sync.")
+            st.success(f"✅ Base processed with {len(all_chunks)} chunks. The app will download it in the next Sync.")
 
     st.markdown("---")
     if KNOWLEDGE_FILE.exists():
         knowledge = json.loads(KNOWLEDGE_FILE.read_text(encoding="utf-8"))
         chunks = knowledge.get("chunks", [])
-        st.markdown(f"**Base Atual:** {len(chunks)} trechos indexados.")
+        st.markdown(f"**Current Base:** {len(chunks)} indexed chunks.")
 
-        with st.expander("Visualizar Trechos Indexados"):
+        with st.expander("View Indexed Chunks"):
             for i, chunk in enumerate(chunks):
-                st.markdown(f"**[{i+1}] Fonte: {chunk['source']}**")
+                st.markdown(f"**[{i+1}] Source: {chunk['source']}**")
                 st.info(chunk["text"])
     else:
-        st.info("A base de conhecimento está vazia.")
+        st.info("The knowledge base is empty.")
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 4 – API & Integração
+# TAB 4 – API & Integration
 # ══════════════════════════════════════════════════════════════════════════════
 with tab4:
-    st.subheader("🔌 API FastAPI & Integração Android")
+    st.subheader("🔌 FastAPI & Android Integration")
 
     online = api_status()
 
     if online:
-        st.success(f"✅ API FastAPI está **online** em `{API_URL}`", icon="🟢")
+        st.success(f"✅ FastAPI is **online** at `{API_URL}`", icon="🟢")
     else:
         st.warning(
-            f"⚠️ API FastAPI está **offline**. "
-            f"Execute `run_api.bat` na pasta `streamlit_backend/`.",
+            f"⚠️ FastAPI is **offline**. "
+            f"Run `run_api.bat` in the `streamlit_backend/` folder.",
             icon="🔴"
         )
 
     st.markdown("---")
-    st.markdown("### 📡 Endpoints disponíveis")
+    st.markdown("### 📡 Available Endpoints")
 
     endpoints = [
-        ("GET",  "/health",  "Health check da API"),
-        ("POST", "/sync",    "Recebe `DocumentState` JSON do app Android"),
-        ("GET",  "/sync",    "Lista todos os documentos recebidos"),
-        ("GET",  "/prompts", "Retorna os prompts atuais (app busca no startup)"),
-        ("POST", "/prompts", "Atualiza os prompts (usado por esta UI)"),
+        ("GET",  "/health",  "API Health check"),
+        ("POST", "/sync",    "Receives `DocumentState` JSON from Android app"),
+        ("GET",  "/sync",    "Lists all received documents"),
+        ("GET",  "/knowledge", "Serves the knowledge base chunks"),
+        ("GET",  "/prompts", "Returns current prompts (app fetches at startup)"),
+        ("POST", "/prompts", "Updates prompts (used by this UI)"),
     ]
 
     header_cols = st.columns([1, 2, 4])

@@ -11,16 +11,12 @@ class PromptManager(private val context: Context) {
         .readTimeout(5, TimeUnit.SECONDS)
         .build()
 
-    // Fallbacks padrão ultra-simplificados para Gemma 2B
-    private var chatPrompt = """
-        Você é uma IA médica assistente. 
-        OBJETIVO: Responder ao usuário e manter um resumo estruturado dos dados clínicos no campo [CONTEÚDO DO ARQUIVO ATUAL].
-        INSTRUÇÃO: 
-        1. Responda de forma direta e técnica.
-        2. Se o usuário informar novos dados (remédios, sintomas, evolução), resuma-os brevemente para serem salvos no arquivo.
-        3. Foco exclusivo em dados médicos. Não faça comentários sobre o sistema.
-    """.trimIndent()
-    private var ocrPrompt = "Analise o OCR médico e liste: Medicamentos, Dosagens e Orientações. Seja breve."
+    // Fallback constants - used only when the backend is unreachable
+    private val DEFAULT_CHAT_PROMPT = "You are a technical AI assistant. Be brief and direct."
+    private val DEFAULT_OCR_PROMPT = "Extract technical data from this OCR text."
+
+    private var chatPrompt = DEFAULT_CHAT_PROMPT
+    private var ocrPrompt = DEFAULT_OCR_PROMPT
 
     fun getChatPrompt() = chatPrompt
     fun getOcrPrompt() = ocrPrompt
@@ -35,14 +31,19 @@ class PromptManager(private val context: Context) {
                     val body = response.body?.string()
                     if (body != null) {
                         val json = JSONObject(body)
-                        chatPrompt = json.optString("chat_system_prompt", chatPrompt)
-                        ocrPrompt = json.optString("ocr_system_prompt", ocrPrompt)
+                        // This updates the local variables with whatever the Backend sends
+                        chatPrompt = json.optString("chat_system_prompt", DEFAULT_CHAT_PROMPT)
+                        ocrPrompt = json.optString("ocr_system_prompt", DEFAULT_OCR_PROMPT)
+                        android.util.Log.d("PromptManager", "Successfully updated prompts from backend")
                         true
                     } else false
-                } else false
+                } else {
+                    android.util.Log.w("PromptManager", "Failed to fetch prompts: ${response.code}")
+                    false
+                }
             }
         } catch (e: Exception) {
-            android.util.Log.e("PromptManager", "Error fetching prompts", e)
+            android.util.Log.e("PromptManager", "Error fetching prompts, using local fallbacks", e)
             false
         }
     }

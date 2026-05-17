@@ -86,8 +86,9 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
+                // Navigation items
                 NavigationDrawerItem(
-                    label = { Text("Novo Chat") },
+                    label = { Text("New Chat") },
                     selected = false,
                     onClick = {
                         viewModel.startNewChat()
@@ -97,7 +98,7 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
                     icon = { Icon(Icons.Default.Add, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
-                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
                 NavigationDrawerItem(
                     label = { Text("Chat") },
                     selected = currentScreen == "Chat",
@@ -109,7 +110,7 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
-                    label = { Text("Arquivos") },
+                    label = { Text("Files") },
                     selected = currentScreen == "Files",
                     onClick = {
                         currentScreen = "Files"
@@ -133,7 +134,7 @@ fun AppNavigation(viewModel: ChatViewModel = viewModel()) {
                     actions = {
                         if (currentScreen == "Chat") {
                             IconButton(onClick = { viewModel.startNewChat() }) {
-                                Icon(Icons.Default.Add, contentDescription = "Novo Chat")
+                                Icon(Icons.Default.Add, contentDescription = "New Chat")
                             }
                         }
                     },
@@ -186,8 +187,8 @@ fun MainScreen(viewModel: ChatViewModel, onSeeDocument: (String) -> Unit) {
     ) {
         when (state) {
             is ChatState.ModelMissing -> DownloadScreen(onDownload = { viewModel.startDownload() })
-            is ChatState.Downloading -> LoadingScreen("Baixando modelo Gemma 4 E2B do Hugging Face...\nVerifique suas notificações.")
-            is ChatState.LoadingModel -> LoadingScreen("Inicializando o motor Gemma 4...")
+            is ChatState.Downloading -> LoadingScreen("Downloading Gemma 4 E2B model from Hugging Face...\nCheck your notifications.")
+            is ChatState.LoadingModel -> LoadingScreen("Initializing Gemma 4 engine...")
             is ChatState.Error -> ErrorScreen((state as ChatState.Error).message) { viewModel.startDownload() }
             else -> ChatScreen(
                 messages = messages,
@@ -223,12 +224,12 @@ fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit, onSeeDocume
             ) {
                 Column {
                     Text(
-                        "Meus Arquivos", 
+                        "My Files", 
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "${documents.size} documentos salvos",
+                        "${documents.size} saved documents",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -237,14 +238,14 @@ fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit, onSeeDocume
                 Button(
                     onClick = { 
                         viewModel.syncData()
-                        android.widget.Toast.makeText(context, "Sincronizando...", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, "Syncing...", android.widget.Toast.LENGTH_SHORT).show()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Sync Geral")
+                    Text("Global Sync")
                 }
             }
         }
@@ -260,12 +261,13 @@ fun FilesScreen(viewModel: ChatViewModel, onUseDocument: () -> Unit, onSeeDocume
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        "Nenhum documento encontrado", 
+                        "No documents found", 
                         color = MaterialTheme.colorScheme.outline
                     )
                 }
             }
-        } else {
+        }
+else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp),
@@ -368,7 +370,7 @@ fun DocumentCard(
                 IconButton(onClick = onDelete) {
                     Icon(
                         Icons.Default.Delete, 
-                        contentDescription = "Excluir", 
+                        contentDescription = "Delete", 
                         tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                         modifier = Modifier.size(20.dp)
                     )
@@ -399,7 +401,7 @@ fun DocumentCard(
                 ) {
                     Icon(Icons.Default.Visibility, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Detalhes", fontSize = 13.sp)
+                    Text("Details", fontSize = 13.sp)
                 }
                 
                 Button(
@@ -410,7 +412,7 @@ fun DocumentCard(
                 ) {
                     Icon(Icons.Default.Chat, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text("Abrir Chat", fontSize = 13.sp)
+                    Text("Open Chat", fontSize = 13.sp)
                 }
             }
         }
@@ -436,9 +438,9 @@ fun DocumentDetailScreen(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Voltar")
+                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
             }
-            Text("Editar Documento", style = MaterialTheme.typography.headlineSmall)
+            Text("Edit Document", style = MaterialTheme.typography.headlineSmall)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -447,7 +449,7 @@ fun DocumentDetailScreen(
         if (imagePath != null) {
             AsyncImage(
                 model = File(imagePath),
-                contentDescription = "Documento",
+                contentDescription = "Document",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
@@ -457,28 +459,28 @@ fun DocumentDetailScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        Text("Texto Extraído (OCR)", fontWeight = FontWeight.Bold)
+        Text("Extracted Text (OCR)", fontWeight = FontWeight.Bold)
         OutlinedTextField(
             value = editedText,
             onValueChange = { editedText = it },
             modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp),
-            label = { Text("Correção de OCR") }
+            label = { Text("OCR Correction") }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Análise do Gemma / Contexto", fontWeight = FontWeight.Bold)
+        Text("Gemma Analysis / Context", fontWeight = FontWeight.Bold)
         OutlinedTextField(
             value = editedContext,
             onValueChange = { editedContext = it },
             modifier = Modifier.fillMaxWidth().heightIn(min = 150.dp),
-            label = { Text("Dados Estruturados") }
+            label = { Text("Structured Data") }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
         
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Status de Sincronização: ", fontWeight = FontWeight.Bold)
+            Text("Sync Status: ", fontWeight = FontWeight.Bold)
             FilterChip(
                 selected = status == "READY",
                 onClick = { status = if (status == "READY") "PENDING" else "READY" },
@@ -504,7 +506,7 @@ fun DocumentDetailScreen(
         ) {
             Icon(Icons.Default.Save, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("SALVAR ALTERAÇÕES")
+            Text("SAVE CHANGES")
         }
     }
 }
@@ -523,7 +525,7 @@ fun ErrorScreen(message: String, onRetry: () -> Unit) {
         Text(text = message, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(modifier = Modifier.height(24.dp))
         Button(onClick = onRetry) {
-            Text("TENTAR NOVAMENTE")
+            Text("TRY AGAIN")
         }
     }
 }
@@ -545,12 +547,12 @@ fun DownloadScreen(onDownload: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "O cérebro está offline",
+            text = "Brain is offline",
             fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            text = "Para rodar sem internet, precisamos baixar o modelo Gemma 4 Effective 2B (aprox. 2.6GB). Recomendamos usar Wi-Fi.",
+            text = "To run without internet, we need to download the Gemma 4 Effective 2B model (approx. 2.6GB). Wi-Fi is recommended.",
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             color = Color.Gray,
             modifier = Modifier.padding(vertical = 16.dp)
@@ -560,7 +562,7 @@ fun DownloadScreen(onDownload: () -> Unit) {
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("BAIXAR GEMMA 4", fontWeight = FontWeight.Bold)
+            Text("DOWNLOAD GEMMA 4", fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -670,7 +672,7 @@ fun ChatScreen(
             }
             if (isGenerating) {
                 item {
-                    Text("Gemma está pensando...", color = Color.Gray, modifier = Modifier.padding(8.dp))
+                    Text("Gemma is thinking...", color = Color.Gray, modifier = Modifier.padding(8.dp))
                 }
             }
         }
@@ -685,7 +687,7 @@ fun ChatScreen(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Como posso ajudar hoje?") },
+                placeholder = { Text("How can I help today?") },
                 shape = RoundedCornerShape(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -695,7 +697,7 @@ fun ChatScreen(
                     enabled = !isGenerating,
                     modifier = Modifier.background(MaterialTheme.colorScheme.secondaryContainer, shape = RoundedCornerShape(24.dp))
                 ) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = "Digitalizar")
+                    Icon(Icons.Default.CameraAlt, contentDescription = "Scan")
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
@@ -718,7 +720,7 @@ fun ChatScreen(
                         shape = RoundedCornerShape(24.dp)
                     )
                 ) {
-                    Icon(Icons.Default.Mic, contentDescription = "Falar", tint = if (isListening) Color.Red else MaterialTheme.colorScheme.onSecondaryContainer)
+                    Icon(Icons.Default.Mic, contentDescription = "Speak", tint = if (isListening) Color.Red else MaterialTheme.colorScheme.onSecondaryContainer)
                 }
             } else {
                 IconButton(
@@ -729,7 +731,7 @@ fun ChatScreen(
                     enabled = !isGenerating && text.isNotBlank(),
                     modifier = Modifier.background(MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(24.dp))
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.onPrimary)
+                    Icon(Icons.Default.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         }
@@ -783,7 +785,7 @@ fun ChatBubble(message: ChatMessage, onSeeMetadata: (String) -> Unit = {}) {
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Fontes: ${message.sources.joinToString(", ")}",
+                            text = "Sources: ${message.sources.joinToString(", ")}",
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
                             color = if (message.isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f) else MaterialTheme.colorScheme.primary
@@ -793,7 +795,7 @@ fun ChatBubble(message: ChatMessage, onSeeMetadata: (String) -> Unit = {}) {
                 if (message.documentId != null) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Visualizar Metadados",
+                        text = "View Metadata",
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (message.isUser) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary,
@@ -814,7 +816,7 @@ private fun startListening(
 ) {
     val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "pt-BR")
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
     }
 
     speechRecognizer.setRecognitionListener(object : RecognitionListener {
@@ -866,7 +868,7 @@ fun parseMarkdown(text: String): AnnotatedString {
 fun enhanceContrast(src: Bitmap): Bitmap {
     val width = src.width
     val height = src.height
-    val dest = Bitmap.createBitmap(width, height, src.config)
+    val dest = Bitmap.createBitmap(width, height, src.config ?: Bitmap.Config.ARGB_8888)
     val canvas = Canvas(dest)
     val paint = Paint()
     val cm = ColorMatrix(floatArrayOf(

@@ -34,13 +34,13 @@ class GemmaInferenceManager(context: Context) {
         android.util.Log.d("GemmaInference", "Initializing LiteRT-LM with model at: $modelPath (Size: ${file.length()} bytes)")
 
         if (!file.exists()) {
-            throw Exception("Arquivo do modelo Gemma 4 não encontrado: $modelPath")
+            throw Exception("Gemma 4 model not found: $modelPath")
         }
 
         try {
             val engineConfig = EngineConfig(
                 modelPath = modelPath,
-                backend = Backend.CPU()
+                backend = Backend.CPU(numOfThreads = 4)
             )
             
             val newEngine = Engine(engineConfig)
@@ -73,6 +73,12 @@ class GemmaInferenceManager(context: Context) {
             emit("Erro na geração: ${e.localizedMessage}")
         }
     }.flowOn(Dispatchers.IO)
+
+    fun recreateConversation() {
+        conversation?.close()
+        conversation = engine?.createConversation()
+        android.util.Log.d("GemmaInference", "Native conversation recreated")
+    }
 
     fun close() {
         conversation?.close()
