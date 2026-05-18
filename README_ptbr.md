@@ -50,30 +50,30 @@ val payload = JSONObject().apply {
 
 ### 📱 Android (App)
 
-To run the Android application:
+Para rodar o aplicativo Android:
 
-1. **Requirements**: Android Studio Jellyfish or higher, physical Android device with at least 6GB RAM (8GB+ recommended for the 2.6GB model).
-2. **Installation**: 
-   - Open the root folder in Android Studio.
-   - Build and install on the device.
-   - Alternatively, you can download the debug APK directly from the repository at [`.artifacts/app-debug.apk`](.artifacts/app-debug.apk).
-3. **AI Model**: When opening the app for the first time, it will prompt you to download the **Gemma 4 E2B** model (~2.6GB) from Hugging Face. Ensure you are on a stable Wi-Fi connection.
-4. **Permissions**: The app will request Camera and Microphone permissions for document analysis and voice commands.
+1. **Requisitos**: Android Studio Jellyfish ou superior, dispositivo físico Android com pelo menos 6GB de RAM (recomendado 8GB+ para o modelo de 2.6GB).
+2. **Instalação**: 
+   - Abra a pasta raiz no Android Studio.
+   - Compile e instale no dispositivo.
+   - Alternativamente, você pode baixar o APK de debug diretamente do repositório em [`.artifacts/app-debug.apk`](.artifacts/app-debug.apk).
+3. **Modelo de IA**: Ao abrir o app pela primeira vez, ele solicitará o download do modelo **Gemma 4 E2B** (~2.6GB) do Hugging Face. Certifique-se de estar em uma conexão Wi-Fi estável.
+4. **Permissões**: O app solicitará permissão de Câmera e Microfone para análise de documentos e comandos de voz.
 
-### 🖥️ Backend (Sync and Admin)
+### 🖥️ Backend (Sincronização e Admin)
 
-The backend manages the knowledge base and receives synced data from the mobile app.
+O backend gerencia a base de conhecimento e recebe os dados sincronizados do celular.
 
-1. **Requirements**: Python 3.10+.
-2. **Setup**:
-   - Go to the `/streamlit_backend` folder.
-   - Create a virtual environment: `python -m venv .venv`.
-   - Activate the environment: `.venv\Scripts\activate` (Windows) or `source .venv/bin/activate` (Mac/Linux).
-   - Install dependencies: `pip install -r requirements.txt`.
-3. **Running**:
-   - Run `run_api.bat` to start the FastAPI API (port 8000).
-   - Run `run_ui.bat` to start the Streamlit Dashboard (port 8501).
-4. **App Configuration**: In the Android app, go to Settings and point the server IP to your machine's local network IP to enable "Sync".
+1. **Requisitos**: Python 3.10+.
+2. **Configuração**:
+   - Vá para a pasta `/streamlit_backend`.
+   - Crie um ambiente virtual: `python -m venv .venv`.
+   - Ative o ambiente: `.venv\Scripts\activate` (Windows) ou `source .venv/bin/activate` (Mac/Linux).
+   - Instale as dependências: `pip install -r requirements.txt`.
+3. **Execução**:
+   - Execute `run_api.bat` para iniciar a API FastAPI (porta 8000).
+   - Execute `run_ui.bat` para iniciar o Dashboard Streamlit (porta 8501).
+4. **Configuração no App**: No aplicativo Android, vá em Configurações e aponte o IP do servidor para o IP da sua máquina na rede local para habilitar o "Sync".
 
 ---
 *Turning edge AI into a vital healthcare and disaster response assistant.*
